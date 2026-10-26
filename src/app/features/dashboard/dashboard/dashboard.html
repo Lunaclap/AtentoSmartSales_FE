@@ -1,0 +1,304 @@
+<div class="container-fluid bg-dark text-light min-vh-100 p-0">
+  <div class="row g-0 flex-nowrap">
+
+    <!-- BARRA LATERAL (SIDEBAR) -->
+   <div class="col-auto">
+      <app-sidebar></app-sidebar>
+    </div>
+    <!-- CONTENIDO PRINCIPAL -->
+    <div class="col overflow-auto p-4" style="max-height: 100vh;">
+      
+      <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom border-secondary small text-muted">
+        <div>Panel Comercial de Ventas <span class="badge bg-secondary text-dark ms-2">v1.0</span></div>
+        <div class="d-flex align-items-center gap-3">
+          <span>martes 20 de octubre de 2026</span>
+          <button class="btn btn-sm btn-outline-secondary text-light">Compartir</button>
+        </div>
+      </div>
+
+      <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
+        <div>
+          <h2 class="fw-bold mb-1">Dashboard comercial</h2>
+          <p class="text-muted small mb-0">Resumen de ventas y clientes del área · datos de ejemplo</p>
+        </div>
+
+        <!-- Filtros de tiempo y campañas -->
+        <div class="d-flex flex-wrap gap-2 align-items-center">
+          <div class="btn-group bg-black p-1 rounded border border-secondary">
+            <button 
+              type="button"
+              class="btn btn-sm border-0" 
+              [ngClass]="diasSeleccionados === 7 ? 'btn-primary text-white' : 'text-muted bg-transparent'" 
+              (click)="seleccionarDias(7)">7 días</button>
+            <button 
+              type="button"
+              class="btn btn-sm border-0" 
+              [ngClass]="diasSeleccionados === 30 ? 'btn-primary text-white' : 'text-muted bg-transparent'" 
+              (click)="seleccionarDias(30)">30 días</button>
+            <button 
+              type="button"
+              class="btn btn-sm border-0" 
+              [ngClass]="diasSeleccionados === 90 ? 'btn-primary text-white' : 'text-muted bg-transparent'" 
+              (click)="seleccionarDias(90)">90 días</button>
+          </div>
+          
+          <!-- Select de Campañas -->
+          <select 
+            class="form-select form-select-sm bg-black text-light border-secondary" 
+            [(ngModel)]="campanaSeleccionada" 
+            (change)="onFiltroChange()">
+            <option value="todas">Todas las campañas</option>
+            <option value="prestamos">Préstamos</option>
+            <option value="telefonia">Telefonía móvil</option>
+            <option value="seguros">Seguros de salud</option>
+          </select>
+
+          <!-- Select de Equipos -->
+          <select 
+            class="form-select form-select-sm bg-black text-light border-secondary" 
+            [(ngModel)]="equipoSeleccionado" 
+            (change)="onFiltroChange()">
+            <option value="todos">Todos los equipos</option>
+            <option value="lima-este">Lima Este</option>
+            <option value="lima-centro">Lima Centro</option>
+            <option value="remoto">Remoto</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- FILA 1: Tarjetas KPI con minigráficos dinámicos -->
+      <div class="row g-3 mb-4">
+        <!-- KPI 1: Ventas cerradas -->
+        <div class="col-xl-3 col-md-6">
+          <div class="card bg-black border-secondary text-light p-3 h-100 d-flex flex-column justify-content-between">
+            <div>
+              <span class="text-muted small">Ventas cerradas</span>
+              <h2 class="fw-bold my-1 display-6">{{ kpis.ventas }}</h2>
+              <span class="text-success small">▲ {{ kpis.ventasVariacion }} <span class="text-muted">frente al periodo anterior</span></span>
+            </div>
+            <!-- Minigráfico SVG -->
+            <div class="mt-3">
+              <svg class="w-100" height="35" viewBox="0 0 150 35" preserveAspectRatio="none">
+                <polyline fill="none" stroke="#ffffff" stroke-width="2" points="0,25 20,10 40,18 60,8 80,22 100,12 120,28 140,5 150,15" />
+                <circle cx="150" cy="15" r="3" fill="#ffffff" />
+              </svg>
+            </div>
+          </div>
+        </div>
+
+        <!-- KPI 2: Tasa de conversión -->
+        <div class="col-xl-3 col-md-6">
+          <div class="card bg-black border-secondary text-light p-3 h-100 d-flex flex-column justify-content-between">
+            <div>
+              <span class="text-muted small">Tasa de conversión</span>
+              <h2 class="fw-bold my-1 display-6">{{ kpis.conversion }}</h2>
+              <span class="text-success small">▲ {{ kpis.conversionVariacion }} <span class="text-muted">frente al periodo anterior</span></span>
+            </div>
+            <!-- Minigráfico SVG -->
+            <div class="mt-3">
+              <svg class="w-100" height="35" viewBox="0 0 150 35" preserveAspectRatio="none">
+                <polyline fill="none" stroke="#ffffff" stroke-width="2" points="0,15 20,22 40,12 60,25 80,18 100,28 120,8 140,20 150,25" />
+                <circle cx="150" cy="25" r="3" fill="#ffffff" />
+              </svg>
+            </div>
+          </div>
+        </div>
+
+        <!-- KPI 3: Venta promedio -->
+        <div class="col-xl-3 col-md-6">
+          <div class="card bg-black border-secondary text-light p-3 h-100">
+            <span class="text-muted small">Venta promedio</span>
+            <h2 class="fw-bold my-1 display-6">{{ kpis.promedio }}</h2>
+            <span class="text-danger small">▼ {{ kpis.promedioVariacion }} <span class="text-muted">frente al periodo anterior</span></span>
+            <span class="text-muted small mt-2" style="font-size: 0.75rem;">Ingreso estimado por venta</span>
+          </div>
+        </div>
+
+        <!-- KPI 4: Meta cumplida -->
+        <div class="col-xl-3 col-md-6">
+          <div class="card bg-black border-secondary text-light p-3 h-100">
+            <span class="text-muted small">Meta cumplida</span>
+            <h2 class="fw-bold my-1 display-6">{{ kpis.metaCumplida }}</h2>
+            <div class="progress bg-secondary mb-2" style="height: 6px;">
+              <div class="progress-bar bg-primary" style="width: 100%"></div>
+            </div>
+            <div class="d-flex justify-content-between small">
+              <span class="text-success">{{ kpis.metaTexto }}</span>
+              <span class="text-muted">{{ kpis.metaValor }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- FILA 2: Gráfico principal de Ventas por día y Embudo -->
+      <div class="row g-3 mb-4">
+        <div class="col-xl-8">
+          <div class="card bg-black border-secondary text-light p-4 h-100">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <div>
+                <h5 class="fw-bold mb-0">Ventas por día</h5>
+                <small class="text-muted">Ventas cerradas frente a la meta diaria · 21 sep al 20 oct</small>
+              </div>
+              <div class="small text-muted d-flex gap-3">
+                <span><span class="text-primary">■</span> Ventas</span>
+                <span><span class="text-secondary">---</span> Meta diaria</span>
+              </div>
+            </div>
+
+            <!-- Gráfico de líneas SVG estructurado -->
+            <div class="bg-dark rounded p-3 position-relative" style="height: 220px;">
+              <svg class="w-100 h-100 position-absolute top-0 start-0 px-3 py-3" viewBox="0 0 600 140" preserveAspectRatio="none">
+                <!-- Guías horizontales de escala (0, 6, 12, 18, 24) -->
+                <line x1="0" y1="10" x2="600" y2="10" stroke="#333333" stroke-width="1" />
+                <line x1="0" y1="40" x2="600" y2="40" stroke="#333333" stroke-width="1" />
+                <line x1="0" y1="70" x2="600" y2="70" stroke="#333333" stroke-width="1" />
+                <line x1="0" y1="100" x2="600" y2="100" stroke="#333333" stroke-width="1" />
+
+                <!-- Línea punteada de Meta Diaria -->
+                <line x1="0" y1="70" x2="600" y2="70" stroke="#9ca3af" stroke-dasharray="5,5" stroke-width="1.5" />
+                
+                <!-- Línea continua de Ventas por Día -->
+                <polyline 
+                  fill="none" 
+                  stroke="#ffffff" 
+                  stroke-width="2.5" 
+                  points="0,70 35,60 70,25 105,32 140,25 175,55 210,15 245,45 280,30 315,95 350,50 385,70 420,70 455,20 490,38 525,85 560,20 600,78" />
+                
+                <!-- Puntuación activa del día actual -->
+                <circle cx="600" cy="78" r="5" fill="#ffffff" stroke="#121212" stroke-width="2" />
+              </svg>
+
+              <!-- Fechas del eje X -->
+              <div class="position-absolute bottom-0 start-0 w-100 px-3 pb-2 d-flex justify-content-between text-muted" style="font-size: 0.75rem;">
+                <span>21 sep</span>
+                <span>25 sep</span>
+                <span>30 sep</span>
+                <span>5 oct</span>
+                <span>9 oct</span>
+                <span>14 oct</span>
+                <span>19 oct</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Embudo de gestión -->
+        <div class="col-xl-4">
+          <div class="card bg-black border-secondary text-light p-4 h-100">
+            <h5 class="fw-bold mb-1">Embudo de gestión</h5>
+            <small class="text-muted mb-3 d-block">De la llamada a la venta</small>
+            
+            <div class="d-flex flex-column gap-3 my-auto">
+              <div>
+                <div class="d-flex justify-content-between small mb-1"><span>Gestiones</span> <span class="fw-bold">3,852</span></div>
+                <div class="progress bg-dark" style="height: 8px;"><div class="progress-bar bg-primary" style="width: 100%;"></div></div>
+              </div>
+              <div>
+                <div class="d-flex justify-content-between small mb-1"><span>Contactos efectivos</span> <span class="fw-bold">2,580</span></div>
+                <div class="progress bg-dark" style="height: 8px;"><div class="progress-bar bg-primary" style="width: 70%;"></div></div>
+              </div>
+              <div>
+                <div class="d-flex justify-content-between small mb-1"><span>Con interés</span> <span class="fw-bold">1,026</span></div>
+                <div class="progress bg-dark" style="height: 8px;"><div class="progress-bar bg-primary" style="width: 30%;"></div></div>
+              </div>
+              <div>
+                <div class="d-flex justify-content-between small mb-1"><span>Ventas</span> <span class="fw-bold">374</span></div>
+                <div class="progress bg-dark" style="height: 8px;"><div class="progress-bar bg-primary" style="width: 15%;"></div></div>
+              </div>
+            </div>
+            <small class="text-muted mt-3" style="font-size: 0.75rem;">67 % de las gestiones llega a un contacto efectivo y 14,5 % de ellos termina en venta.</small>
+          </div>
+        </div>
+      </div>
+
+      <!-- FILA 3: Ventas por asesor y Conversión por campaña -->
+      <div class="row g-3 mb-4">
+        <div class="col-xl-6">
+          <div class="card bg-black border-secondary text-light p-4 h-100">
+            <h5 class="fw-bold mb-1">Ventas por asesor</h5>
+            <small class="text-muted mb-4 d-block">Ordenado de mayor a menor</small>
+            
+            <div class="d-flex flex-column gap-3">
+              <div *ngFor="let asesor of asesores" class="d-flex align-items-center justify-content-between">
+                <span class="small" style="width: 140px;">{{ asesor.nombre }}</span>
+                <div class="flex-grow-1 mx-3 bg-dark rounded" style="height: 10px;">
+                  <div class="bg-primary rounded h-100" [style.width]="asesor.ancho"></div>
+                </div>
+                <span class="fw-bold small" style="width: 30px; text-align: right;">{{ asesor.ventas }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-xl-6">
+          <div class="card bg-black border-secondary text-light p-4 h-100">
+            <h5 class="fw-bold mb-1">Conversión por campaña</h5>
+            <small class="text-muted mb-4 d-block">Ventas ÷ gestiones del periodo</small>
+            
+            <div class="row text-center mt-3">
+              <div class="col">
+                <div class="fw-bold mb-2">9,1 %</div>
+                <div class="bg-primary mx-auto rounded-top mb-2" style="width: 40px; height: 90px;"></div>
+                <small class="text-muted">Préstamos</small>
+              </div>
+              <div class="col">
+                <div class="fw-bold mb-2">12,8 %</div>
+                <div class="bg-warning mx-auto rounded-top mb-2" style="width: 40px; height: 120px;"></div>
+                <small class="text-muted">Telefonía móvil</small>
+              </div>
+              <div class="col">
+                <div class="fw-bold mb-2">7,2 %</div>
+                <div class="bg-success mx-auto rounded-top mb-2" style="width: 40px; height: 70px;"></div>
+                <small class="text-muted">Seguros de salud</small>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- FILA 4: Clientes con seguimiento pendiente -->
+      <div class="card bg-black border-secondary text-light p-4 mb-4">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <div>
+            <h5 class="fw-bold mb-0">Clientes con seguimiento pendiente</h5>
+            <small class="text-muted">Los más atrasados primero</small>
+          </div>
+          <button class="btn btn-sm btn-outline-secondary text-light">Ver todos los clientes</button>
+        </div>
+
+        <div class="table-responsive">
+          <table class="table table-dark table-hover align-middle mb-0 border-secondary">
+            <thead>
+              <tr class="text-muted small">
+                <th>CLIENTE</th>
+                <th>ASESOR</th>
+                <th>CAMPAÑA</th>
+                <th>ÚLTIMO CONTACTO</th>
+                <th>SEGUIMIENTO</th>
+                <th>ESTADO</th>
+                <th class="text-end">ACCIÓN</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let c of clientesPendientes">
+                <td>
+                  <div class="fw-bold">{{ c.nombre }}</div>
+                  <small class="text-muted">{{ c.codigo }}</small>
+                </td>
+                <td>{{ c.asesor }}</td>
+                <td><span class="badge bg-secondary text-dark">● {{ c.campana }}</span></td>
+                <td class="text-muted">{{ c.ultimoContacto }}</td>
+                <td class="text-danger fw-semibold">{{ c.seguimiento }}</td>
+                <td><span class="text-muted">● {{ c.estado }}</span></td>
+                <td class="text-end">
+                  <button class="btn btn-sm btn-outline-secondary text-light py-1 px-2" style="font-size: 0.8rem;">Ver ficha</button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>

@@ -1,0 +1,99 @@
+<div class="container-fluid bg-dark text-light min-vh-100 p-0">
+  <div class="row g-0 flex-nowrap">
+
+    <!-- BARRA LATERAL (SIDEBAR) -->
+   <div class="col-auto">
+      <app-sidebar></app-sidebar>
+    </div>
+
+    <!-- CONTENIDO PRINCIPAL -->
+    <div class="col overflow-auto p-4" style="max-height: 100vh;">
+      
+      <!-- Cabecera Superior -->
+      <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom border-secondary small text-muted">
+        <div>Panel Comercial de Ventas <span class="badge bg-secondary text-dark ms-2">v1.0</span></div>
+        <div class="d-flex align-items-center gap-3">
+          <span>martes 20 de octubre de 2026</span>
+          <button class="btn btn-sm btn-outline-secondary text-light">Compartir</button>
+        </div>
+      </div>
+
+      <!-- Título de sección y botón Nuevo Cliente -->
+      <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
+        <div>
+          <h2 class="fw-bold mb-1">Clientes</h2>
+          <p class="text-muted small mb-0">Cartera completa del área · 96 clientes</p>
+        </div>
+        <button class="btn btn-primary fw-semibold px-3" (click)="nuevoCliente()">
+          Nuevo cliente
+        </button>
+      </div>
+
+      <!-- BARRA DE FILTROS Y BÚSQUEDA -->
+      <div class="d-flex flex-wrap gap-3 align-items-center mb-4">
+        <!-- Input de búsqueda -->
+        <div style="width: 280px;">
+          <input 
+            type="text" 
+            class="form-control bg-black text-light border-secondary" 
+            placeholder="Buscar por nombre o documento" 
+            [(ngModel)]="busqueda" />
+        </div>
+
+        <!-- Selector de Estados -->
+        <select class="form-select bg-black text-light border-secondary w-auto" [(ngModel)]="estadoSeleccionado">
+          <option value="todos">Todos los estados</option>
+          <option value="nuevo">Nuevo</option>
+          <option value="contactado">Contactado</option>
+          <option value="interesado">Interesado</option>
+          <option value="cerrado">Cerrado</option>
+          <option value="perdido">Perdido</option>
+        </select>
+      </div>
+
+      <!-- TABLA DE CLIENTES -->
+      <div class="card bg-black border-secondary text-light p-4 mb-4">
+        <div class="table-responsive">
+          <table class="table table-dark table-hover align-middle mb-0 border-secondary">
+            <thead>
+              <tr class="text-muted small">
+                <th>CLIENTE</th>
+                <th>ASESOR</th>
+                <th>CAMPAÑA</th>
+                <th>ESTADO</th>
+                <th>ÚLTIMO CONTACTO</th>
+                <th>PRÓXIMO SEGUIMIENTO</th>
+                <th class="text-end">ACCIÓN</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let c of clientes">
+                <td>
+                  <div class="fw-bold">{{ c.nombre }}</div>
+                  <small class="text-muted">{{ c.tipoDoc }} · {{ c.documento }}</small>
+                </td>
+                <td>{{ c.asesor }}</td>
+                <td><span class="text-muted small">● {{ c.campana }}</span></td>
+                <td>
+                  <span class="badge" [ngClass]="{
+                    'bg-success text-white': c.estado === 'Cerrado',
+                    'bg-secondary text-light': c.estado === 'Contactado',
+                    'bg-primary text-white': c.estado === 'Interesado'
+                  }">
+                    ● {{ c.estado }}
+                  </span>
+                </td>
+                <td class="text-muted">{{ c.ultimoContacto }}</td>
+                <td>{{ c.proximoSeguimiento }}</td>
+                <td class="text-end">
+                  <button class="btn btn-sm btn-outline-secondary text-light py-1 px-2" style="font-size: 0.8rem;">Ver ficha</button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>

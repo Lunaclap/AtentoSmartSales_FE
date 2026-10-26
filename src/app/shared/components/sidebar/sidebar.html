@@ -1,0 +1,62 @@
+<div class="col-auto bg-black border-end border-secondary d-flex flex-column justify-content-between p-3" style="width: 260px; min-height: 100vh;">
+  <div>
+    <!-- Logo / Marca -->
+    <div class="d-flex align-items-center gap-2 mb-4 px-2">
+      <div class="bg-primary p-2 rounded text-white fs-5">📊</div>
+      <span class="fw-bold">Panel Comercial</span>
+    </div>
+
+    <!-- Menú de Navegación Único -->
+    <ul class="nav flex-column gap-1">
+      <li class="nav-item">
+        <a class="nav-link text-muted py-2 px-3 d-flex align-items-center gap-2" 
+           routerLink="/dashboard" 
+           routerLinkActive="active bg-primary text-white rounded">
+          <i class="bi bi-grid-1x2-fill"></i> Dashboard comercial
+        </a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link text-muted py-2 px-3 d-flex align-items-center gap-2" 
+           routerLink="/equipos-asesores" 
+           routerLinkActive="active bg-primary text-white rounded">
+          <i class="bi bi-people"></i> Equipos y asesores
+        </a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link text-muted py-2 px-3 d-flex align-items-center gap-2" 
+           routerLink="/reportes" 
+           routerLinkActive="active bg-primary text-white rounded">
+          <i class="bi bi-file-earmark-text"></i> Reportes
+        </a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link text-muted py-2 px-3 d-flex align-items-center gap-2" 
+           routerLink="/clientes" 
+           routerLinkActive="active bg-primary text-white rounded">
+          <i class="bi bi-person-lines-fill"></i> Clientes
+        </a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link text-muted py-2 px-3 d-flex align-items-center gap-2" 
+           routerLink="/metas-kpi" 
+           routerLinkActive="active bg-primary text-white rounded">
+          <i class="bi bi-bullseye"></i> Metas y KPI
+        </a>
+      </li>
+    </ul>
+  </div>
+
+  <!-- Perfil de Usuario e Inicio/Cierre de Sesión -->
+  <div class="border-top border-secondary pt-3 d-flex align-items-center justify-content-between">
+    <div class="d-flex align-items-center gap-2">
+      <div class="bg-secondary rounded px-2 py-1 fw-bold small text-dark">RM</div>
+      <div>
+        <div class="fw-bold small">Rosa Medina</div>
+        <div class="text-muted" style="font-size: 0.75rem;">Gerente comercial</div>
+      </div>
+    </div>
+    <button class="btn btn-sm text-muted p-0" title="Salir" (click)="cerrarSesion()">
+      <i class="bi bi-box-arrow-left fs-5"></i>
+    </button>
+  </div>
+</div>

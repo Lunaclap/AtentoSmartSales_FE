@@ -1,0 +1,78 @@
+<div class="container-fluid vh-100 p-0 bg-dark text-light">
+  <div class="row g-0 h-100">
+    
+    <div class="col-lg-6 d-none d-lg-flex flex-column justify-content-between p-5 border-end border-secondary">
+      
+      <div class="d-flex align-items-center gap-2 fw-bold fs-5">
+        <div class="bg-primary p-2 rounded text-white">📊</div>
+        <span>Panel Comercial</span>
+      </div>
+
+      <div class="hero-text my-auto">
+        <h1 class="display-4 fw-bold mb-3">Las cifras de <br>ventas, a un clic.</h1>
+        <p class="text-muted fs-6">Prototipo inicial del área de ventas del caso Atento Perú: indicadores, clientes y reportes en un solo lugar.</p>
+      </div>
+
+      <div class="d-flex flex-column gap-2 text-secondary">
+        <div class="d-flex align-items-center gap-2">
+          <span class="text-success fw-bold">✓</span> Indicadores y metas al día, sin armar reportes a mano
+        </div>
+        <div class="d-flex align-items-center gap-2">
+          <span class="text-success fw-bold">✓</span> Cartera de clientes y seguimientos en una sola ficha
+        </div>
+        <div class="d-flex align-items-center gap-2">
+          <span class="text-success fw-bold">✓</span> Reportes por asesor, equipo y campaña listos para decidir
+        </div>
+      </div>
+
+      <div class="d-flex align-items-end gap-2 mt-4" style="height: 60px;">
+        <div class="bg-primary rounded-top" style="width: 12px; height: 30%;"></div>
+        <div class="bg-primary rounded-top" style="width: 12px; height: 50%;"></div>
+        <div class="bg-primary rounded-top" style="width: 12px; height: 40%;"></div>
+        <div class="bg-primary rounded-top" style="width: 12px; height: 70%;"></div>
+        <div class="bg-primary rounded-top" style="width: 12px; height: 85%;"></div>
+        <div class="bg-primary rounded-top" style="width: 12px; height: 60%;"></div>
+      </div>
+    </div>
+
+    <div class="col-12 col-lg-6 d-flex align-items-center justify-content-center p-4">
+      <div class="w-100" style="max-width: 400px;">
+        <h2 class="fw-bold mb-1">Ingresa a tu panel</h2>
+        <p class="text-muted mb-4">Elige tu perfil para ver tu vista.</p>
+
+        <div class="d-flex p-1 bg-black rounded border border-secondary mb-4">
+          <button 
+            type="button" 
+            class="btn w-50 py-2 fw-semibold border-0 {{ perfilSeleccionado === 'gerente' ? 'btn-primary text-white' : 'text-muted bg-transparent' }}"
+            (click)="seleccionarPerfil('gerente')"> 
+            Gerente
+          </button>
+          <button 
+            type="button" 
+            class="btn w-50 py-2 fw-semibold border-0 {{ perfilSeleccionado === 'asesor' ? 'btn-primary text-white' : 'text-muted bg-transparent' }}"
+            (click)="seleccionarPerfil('asesor')">
+            Asesor
+          </button>
+        </div>
+
+        <!-- Formulario -->
+        <form (submit)="onIngresar(); $event.preventDefault()">
+          <div class="mb-3">
+            <label class="form-label text-light">Usuario</label>
+            <input type="text" class="form-control bg-black text-light border-secondary py-2" [(ngModel)]="usuario" name="usuario" required />
+          </div>
+
+          <div class="mb-4">
+            <label class="form-label text-light">Contraseña</label>
+            <input type="password" class="form-control bg-black text-light border-secondary py-2" [(ngModel)]="contrasena" name="contrasena" placeholder="••••••••" required />
+          </div>
+
+          <button type="submit" class="btn btn-primary w-100 py-2 fw-semibold">Ingresar</button>
+        </form>
+
+        <p class="text-center text-muted small mt-4">Prototipo con datos de ejemplo. Cualquier contraseña es válida.</p>
+      </div>
+    </div>
+
+  </div>
+</div>
