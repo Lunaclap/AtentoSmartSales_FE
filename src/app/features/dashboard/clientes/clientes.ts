@@ -1,36 +1,39 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
-import { SidebarComponent } from '../../../shared/components/sidebar/sidebar';
+import { DataTableComponent } from '../../../shared/components/data-table/data-table';
+import { ClientFormComponent } from '../../../shared/components/client-form/client-form';
 
 @Component({
   selector: 'app-clientes',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, SidebarComponent],
+  imports: [CommonModule, FormsModule, DataTableComponent, ClientFormComponent],
   templateUrl: './clientes.html',
   styleUrl: './clientes.css'
 })
 export class ClientesComponent {
-  busqueda: string = '';
-  estadoSeleccionado: string = 'todos';
+  mostrarFormulario = false;
 
-  // Cartera de clientes de ejemplo
-  clientes = [
-    { nombre: 'Víctor Flores Salas', tipoDoc: 'Persona', documento: '11731842', asesor: 'Andrea Rojas', campana: 'Préstamos', estado: 'Contactado', ultimoContacto: 'Hoy', proximoSeguimiento: 'En 2 d' },
-    { nombre: 'Víctor Castillo Herrera', tipoDoc: 'Persona', documento: '78771950', asesor: 'Diego Salazar', campana: 'Telefonía móvil', estado: 'Contactado', ultimoContacto: 'Hoy', proximoSeguimiento: 'En 2 d' },
-    { nombre: 'Constructora Surco S.A.C.', tipoDoc: 'Empresa', documento: '20144198825', asesor: 'Valeria Chávez', campana: 'Seguros de salud', estado: 'Cerrado', ultimoContacto: 'Hoy', proximoSeguimiento: '—' },
-    { nombre: 'Ana Ponce Díaz', tipoDoc: 'Persona', documento: '14323886', asesor: 'Kevin Torres', campana: 'Préstamos', estado: 'Contactado', ultimoContacto: 'Hoy', proximoSeguimiento: 'En 5 d' },
-    { nombre: 'Rosa Vera Torres', tipoDoc: 'Persona', documento: '23771659', asesor: 'Camila Flores', campana: 'Telefonía móvil', estado: 'Contactado', ultimoContacto: 'Hoy', proximoSeguimiento: 'En 3 d' },
-    { nombre: 'Raúl Medina Vargas', tipoDoc: 'Persona', documento: '12885357', asesor: 'Valeria Chávez', campana: 'Seguros de salud', estado: 'Contactado', ultimoContacto: 'Hoy', proximoSeguimiento: 'En 1 d' },
-    { nombre: 'Carlos Vera Vera', tipoDoc: 'Persona', documento: '21896472', asesor: 'Fiorella Vega', campana: 'Telefonía móvil', estado: 'Contactado', ultimoContacto: 'Hoy', proximoSeguimiento: 'En 5 d' },
-    { nombre: 'Héctor Aguilar Medina', tipoDoc: 'Persona', documento: '10096893', asesor: 'Jorge Mamani', campana: 'Seguros de salud', estado: 'Contactado', ultimoContacto: 'Hoy', proximoSeguimiento: 'En 1 d' },
-    { nombre: 'Gladys Herrera Gómez', tipoDoc: 'Persona', documento: '22069446', asesor: 'Kevin Torres', campana: 'Préstamos', estado: 'Contactado', ultimoContacto: 'Hoy', proximoSeguimiento: 'En 2 d' },
-    { nombre: 'Sofía Díaz Salas', tipoDoc: 'Persona', documento: '73838502', asesor: 'Lucía Quispe', campana: 'Préstamos', estado: 'Interesado', ultimoContacto: 'Hoy', proximoSeguimiento: 'En 2 d' },
-    { nombre: 'Servicios Pacífico S.A.C.', tipoDoc: 'Empresa', documento: '20556677881', asesor: 'Luis Paredes', campana: 'Telefonía móvil', estado: 'Interesado', ultimoContacto: 'Ayer', proximoSeguimiento: 'En 2 d' }
+  columnasClientes: string[] = [
+    'CLIENTE',
+    'ASESOR',
+    'CAMPAÑA',
+    'ESTADO',
+    'ÚLTIMO CONTACTO',
+    'PRÓXIMO SEGUIMIENTO',
+    'ACCIÓN'
   ];
 
-  nuevoCliente() {
-    alert('Abriendo formulario para registrar un nuevo cliente...');
+  clientesCartera = [
+    { nombre: 'Víctor Flores Salas', tipo: 'Persona', doc: '11731842', asesor: 'Andrea Rojas', campana: 'Préstamos', estado: 'Contactado', claseEstado: 'text-muted', ultimoContacto: 'Hoy', proximoSeguimiento: 'En 2 d' },
+    { nombre: 'Víctor Castillo Herrera', tipo: 'Persona', doc: '78771950', asesor: 'Diego Salazar', campana: 'Telefonía móvil', estado: 'Contactado', claseEstado: 'text-muted', ultimoContacto: 'Hoy', proximoSeguimiento: 'En 2 d' },
+    { nombre: 'Constructora Surco S.A.C.', tipo: 'Empresa', doc: '20144198825', asesor: 'Valeria Chávez', campana: 'Seguros de salud', estado: 'Cerrado', claseEstado: 'text-success', ultimoContacto: 'Hoy', proximoSeguimiento: '—' },
+    { nombre: 'Ana Ponce Díaz', tipo: 'Persona', doc: '14323886', asesor: 'Kevin Torres', campana: 'Préstamos', estado: 'Contactado', claseEstado: 'text-muted', ultimoContacto: 'Hoy', proximoSeguimiento: 'En 5 d' },
+    { nombre: 'Rosa Vera Torres', tipo: 'Persona', doc: '23771659', asesor: 'Camila Flores', campana: 'Telefonía móvil', estado: 'Contactado', claseEstado: 'text-muted', ultimoContacto: 'Hoy', proximoSeguimiento: 'En 3 d' },
+    { nombre: 'Raúl Medina Vargas', tipo: 'Persona', doc: '12885357', asesor: 'Valeria Chávez', campana: 'Seguros de salud', estado: 'Contactado', claseEstado: 'text-muted', ultimoContacto: 'Hoy', proximoSeguimiento: 'En 1 d' }
+  ];
+
+  toggleFormulario() {
+    this.mostrarFormulario = !this.mostrarFormulario;
   }
 }

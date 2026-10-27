@@ -1,0 +1,15 @@
+<div class="container-fluid bg-dark text-light min-vh-100 p-0">
+  <div class="row g-0 flex-nowrap">
+    
+    <!-- Barra lateral fija a la izquierda -->
+    <div class="col-auto">
+      <app-sidebar></app-sidebar>
+    </div>
+
+    <!-- Contenido dinámico que cambia según la ruta -->
+    <div class="col overflow-auto p-4" style="max-height: 100vh;">
+      <router-outlet></router-outlet>
+    </div>
+
+  </div>
+</div>

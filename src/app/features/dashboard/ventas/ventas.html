@@ -1,0 +1,64 @@
+<!-- Cabecera del módulo -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h2 class="fw-bold mb-1">Gestión de Ventas</h2>
+    <p class="text-muted small mb-0">Control y registro de transacciones cerradas por el call center</p>
+  </div>
+  <button class="btn btn-sm btn-primary fw-semibold px-3" (click)="toggleModalVenta()">
+    {{ mostrarModalVenta ? 'Ver listado' : '+ Nueva venta' }}
+  </button>
+</div>
+
+<!-- Si se activa, muestra el componente compartido SaleForm -->
+<div *ngIf="mostrarModalVenta" class="mb-4">
+  <app-sale-form (onSubmit)="toggleModalVenta()" (onCancel)="toggleModalVenta()"></app-sale-form>
+</div>
+
+<!-- Vista principal del módulo de ventas -->
+<div *ngIf="!mostrarModalVenta">
+  <!-- 1. Componente compartido: FilterBar -->
+  <div class="mb-4">
+    <app-filter-bar></app-filter-bar>
+  </div>
+
+  <!-- 2. Componentes compartidos: KpiCards de resumen rápido -->
+  <div class="row g-3 mb-4">
+    <div class="col-xl-4 col-md-4">
+      <app-kpi-card titulo="Ventas del Periodo" valor="374" variacion="+17,2%" [esPositivo]="true">
+        <small class="text-muted d-block mt-2">Registradas en los últimos 30 días</small>
+      </app-kpi-card>
+    </div>
+    <div class="col-xl-4 col-md-4">
+      <app-kpi-card titulo="Ingreso Acumulado" valor="S/ 474,980" variacion="+12,4%" [esPositivo]="true">
+        <small class="text-muted d-block mt-2">Suma total estimada</small>
+      </app-kpi-card>
+    </div>
+    <div class="col-xl-4 col-md-4">
+      <app-kpi-card titulo="Ticket Promedio" valor="S/ 1,270" variacion="-0,8%" [esPositivo]="false">
+        <small class="text-muted d-block mt-2">Por transacción cerrada</small>
+      </app-kpi-card>
+    </div>
+  </div>
+
+  <!-- 3. Componente compartido: DataTable para el historial de transacciones -->
+  <div class="card bg-black border-secondary text-light p-4">
+    <h5 class="fw-bold mb-1">Historial de transacciones</h5>
+    <small class="text-muted mb-4 d-block">Detalle individual de cierres de campaña</small>
+
+    <app-data-table [columnas]="columnasVentas">
+      <tr *ngFor="let v of listaVentas">
+        <td class="fw-bold text-primary">{{ v.id }}</td>
+        <td>{{ v.cliente }}</td>
+        <td>{{ v.asesor }}</td>
+        <td><span class="text-muted small">● {{ v.campana }}</span></td>
+        <td class="fw-semibold">{{ v.monto }}</td>
+        <td class="text-muted small">{{ v.fecha }}</td>
+        <td>
+          <span class="badge" [ngClass]="v.estado === 'Aprobado' ? 'bg-success text-white' : 'bg-warning text-dark'">
+            {{ v.estado }}
+          </span>
+        </td>
+      </tr>
+    </app-data-table>
+  </div>
+</div>

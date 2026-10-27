@@ -1,108 +1,44 @@
-<div class="container-fluid bg-dark text-light min-vh-100 p-0">
-  <div class="row g-0 flex-nowrap">
-
-    <!-- BARRA LATERAL (SIDEBAR) -->
-    <div class="col-auto">
-        <app-sidebar></app-sidebar>
-    </div>
-
-    <!-- CONTENIDO PRINCIPAL -->
-    <div class="col overflow-auto p-4" style="max-height: 100vh;">
-      
-      <!-- Cabecera Superior -->
-      <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom border-secondary small text-muted">
-        <div>Panel Comercial de Ventas <span class="badge bg-secondary text-dark ms-2">v1.0</span></div>
-        <div class="d-flex align-items-center gap-3">
-          <span>martes 20 de octubre de 2026</span>
-          <button class="btn btn-sm btn-outline-secondary text-light">Compartir</button>
-        </div>
-      </div>
-
-      <!-- Título de sección y botón de exportar -->
-      <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
-        <div>
-          <h2 class="fw-bold mb-1">Reportes</h2>
-          <p class="text-muted small mb-0">Arma el informe que necesitas para tu reunión de seguimiento</p>
-        </div>
-        <button class="btn btn-primary fw-semibold px-3" (click)="copiarCsv()">
-          Copiar como CSV
-        </button>
-      </div>
-
-      <!-- TARJETA: Parámetros del reporte -->
-      <div class="card bg-black border-secondary text-light p-4 mb-4">
-        <h5 class="fw-bold mb-3">Parámetros del reporte</h5>
-        
-        <div class="d-flex flex-wrap gap-3 align-items-center">
-          <!-- Botones de días -->
-          <div class="btn-group bg-dark p-1 rounded border border-secondary">
-            <button class="btn btn-sm border-0" [ngClass]="diasSeleccionados === 7 ? 'btn-primary text-white' : 'text-muted bg-transparent'" (click)="seleccionarDias(7)">7 días</button>
-            <button class="btn btn-sm border-0" [ngClass]="diasSeleccionados === 30 ? 'btn-primary text-white' : 'text-muted bg-transparent'" (click)="seleccionarDias(30)">30 días</button>
-            <button class="btn btn-sm border-0" [ngClass]="diasSeleccionados === 90 ? 'btn-primary text-white' : 'text-muted bg-transparent'" (click)="seleccionarDias(90)">90 días</button>
-          </div>
-          
-          <!-- Campañas -->
-          <select class="form-select form-select-sm bg-dark text-light border-secondary w-auto" [(ngModel)]="campanaSeleccionada">
-            <option value="todas">Todas las campañas</option>
-            <option value="prestamos">Préstamos</option>
-            <option value="telefonia">Telefonía móvil</option>
-            <option value="seguros">Seguros de salud</option>
-          </select>
-
-          <!-- Equipos -->
-          <select class="form-select form-select-sm bg-dark text-light border-secondary w-auto" [(ngModel)]="equipoSeleccionado">
-            <option value="todos">Todos los equipos</option>
-            <option value="lima-este">Lima Este</option>
-            <option value="lima-centro">Lima Centro</option>
-            <option value="remoto">Remoto</option>
-          </select>
-        </div>
-
-        <!-- Fila inferior: Agrupar por -->
-        <div class="d-flex align-items-center gap-3 mt-3 pt-3 border-top border-secondary">
-          <span class="text-muted small">Agrupar por</span>
-          <select class="form-select form-select-sm bg-dark text-light border-secondary w-auto" [(ngModel)]="agruparPor">
-            <option value="asesor">Asesor</option>
-            <option value="equipo">Equipo</option>
-            <option value="campana">Campaña</option>
-            <option value="semana">Semana</option>
-          </select>
-        </div>
-      </div>
-
-      <!-- TABLA: Resultados del reporte -->
-      <div class="card bg-black border-secondary text-light p-4 mb-4">
-        <h5 class="fw-bold mb-1">Resultados por asesor</h5>
-        <small class="text-muted mb-3 d-block">Últimos 30 días · ingreso estimado en soles</small>
-
-        <div class="table-responsive">
-          <table class="table table-dark table-hover align-middle mb-0 border-secondary">
-            <thead>
-              <tr class="text-muted small">
-                <th>ASESOR</th>
-                <th>GESTIONES</th>
-                <th>VENTAS</th>
-                <th>CONVERSIÓN</th>
-                <th>INGRESO EST.</th>
-                <th>VENTA PROM.</th>
-                <th>META</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr *ngFor="let r of reportesData">
-                <td class="fw-bold">{{ r.asesor }}</td>
-                <td>{{ r.gestiones }}</td>
-                <td>{{ r.ventas }}</td>
-                <td>{{ r.conversion }}</td>
-                <td class="text-success fw-semibold">{{ r.ingresoEst }}</td>
-                <td>{{ r.ventaProm }}</td>
-                <td><span class="badge bg-secondary text-dark">● {{ r.meta }}</span></td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-    </div>
+<!-- Cabecera de la vista -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h2 class="fw-bold mb-1">Reportes</h2>
+    <p class="text-muted small mb-0">Arma el informe que necesitas para tu reunión de seguimiento</p>
   </div>
+  <button class="btn btn-sm btn-primary fw-semibold px-3">Copiar como CSV</button>
+</div>
+
+<!-- Tarjeta de Parámetros del reporte con el componente FilterBar -->
+<div class="card bg-black border-secondary text-light p-4 mb-4">
+  <h5 class="fw-bold mb-3 small text-muted text-uppercase">Parámetros del reporte</h5>
+  
+  <!-- Uso de la barra de filtros compartida -->
+  <app-filter-bar></app-filter-bar>
+
+  <!-- Selector extra de agrupación visto en el diseño original -->
+  <div class="d-flex align-items-center gap-2 mt-2">
+    <span class="small text-muted" style="width: 80px;">Agrupar por</span>
+    <select class="form-select form-select-sm bg-black text-light border-secondary w-auto">
+      <option value="asesor">Asesor</option>
+      <option value="equipo">Equipo</option>
+      <option value="campana">Campaña</option>
+    </select>
+  </div>
+</div>
+
+<!-- Sección de Resultados por asesor con el componente DataTable -->
+<div class="card bg-black border-secondary text-light p-4 mb-4">
+  <h5 class="fw-bold mb-1">Resultados por asesor</h5>
+  <small class="text-muted mb-4 d-block">Últimos 30 días · ingreso estimado en soles</small>
+
+  <app-data-table [columnas]="columnasReporte">
+    <tr *ngFor="let r of reportesAsesores">
+      <td class="fw-bold">{{ r.nombre }}</td>
+      <td>{{ r.gestiones }}</td>
+      <td>{{ r.ventas }}</td>
+      <td>{{ r.conversion }}</td>
+      <td class="fw-semibold">{{ r.ingreso }}</td>
+      <td>{{ r.promedio }}</td>
+      <td class="text-success fw-semibold">{{ r.meta }}</td>
+    </tr>
+  </app-data-table>
 </div>

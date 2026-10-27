@@ -1,124 +1,73 @@
-<div class="container-fluid bg-dark text-light min-vh-100 p-0">
-  <div class="row g-0 flex-nowrap">
+<!-- Cabecera de la vista -->
+<div class="mb-4">
+  <h2 class="fw-bold mb-1">Equipos y asesores</h2>
+  <p class="text-muted small mb-0">Compara equipos y detecta quién necesita apoyo</p>
+</div>
 
-    <!-- BARRA LATERAL (SIDEBAR) -->
-    <div class="col-auto">
-      <app-sidebar></app-sidebar>
-    </div>
+<!-- 1. Componente compartido: FilterBar -->
+<app-filter-bar></app-filter-bar>
 
-    <!-- CONTENIDO PRINCIPAL -->
-    <div class="col overflow-auto p-4" style="max-height: 100vh;">
-      
-      <!-- Cabecera Superior -->
-      <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom border-secondary small text-muted">
-        <div>Panel Comercial de Ventas <span class="badge bg-secondary text-dark ms-2">v1.0</span></div>
-        <div class="d-flex align-items-center gap-3">
-          <span>martes 20 de octubre de 2026</span>
-          <button class="btn btn-sm btn-outline-secondary text-light">Compartir</button>
-        </div>
+<!-- 2. Componente compartido: KpiCard para los Equipos -->
+<div class="row g-3 mb-4">
+  <div class="col-xl-4">
+    <app-kpi-card titulo="Lima Este" valor="135 ventas" variacion="121 %" [esPositivo]="true">
+      <div class="progress bg-secondary my-2" style="height: 6px;">
+        <div class="progress-bar bg-primary" style="width: 100%"></div>
       </div>
-
-      <!-- Título de sección -->
-      <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
-        <div>
-          <h2 class="fw-bold mb-1">Equipos y asesores</h2>
-          <p class="text-muted small mb-0">Compara equipos y detecta quién necesita apoyo</p>
-        </div>
-
-        <!-- Filtros superiores -->
-        <div class="d-flex flex-wrap gap-2 align-items-center">
-          <div class="btn-group bg-black p-1 rounded border border-secondary">
-            <button class="btn btn-sm border-0" [ngClass]="diasSeleccionados === 7 ? 'btn-primary text-white' : 'text-muted bg-transparent'" (click)="seleccionarDias(7)">7 días</button>
-            <button class="btn btn-sm border-0" [ngClass]="diasSeleccionados === 30 ? 'btn-primary text-white' : 'text-muted bg-transparent'" (click)="seleccionarDias(30)">30 días</button>
-            <button class="btn btn-sm border-0" [ngClass]="diasSeleccionados === 90 ? 'btn-primary text-white' : 'text-muted bg-transparent'" (click)="seleccionarDias(90)">90 días</button>
-          </div>
-          
-          <select class="form-select form-select-sm bg-black text-light border-secondary" [(ngModel)]="campanaSeleccionada">
-            <option value="todas">Todas las campañas</option>
-            <option value="prestamos">Préstamos</option>
-            <option value="telefonia">Telefonía móvil</option>
-            <option value="seguros">Seguros de salud</option>
-          </select>
-
-          <select class="form-select form-select-sm bg-black text-light border-secondary" [(ngModel)]="equipoSeleccionado">
-            <option value="todos">Todos los equipos</option>
-            <option value="lima-este">Lima Este</option>
-            <option value="lima-centro">Lima Centro</option>
-            <option value="remoto">Remoto</option>
-          </select>
-        </div>
+      <div class="d-flex justify-content-between small">
+        <span class="text-success">✓ En meta</span>
+        <span class="text-muted">Conversión 10,4 % · 4 asesores</span>
       </div>
-
-      <!-- TARJETAS SUPERIORES DE EQUIPOS -->
-      <div class="row g-3 mb-4">
-        <div *ngFor="let eq of equipos" class="col-xl-4 col-md-6">
-          <div class="card bg-black border-secondary text-light p-4 h-100">
-            <div class="d-flex justify-content-between align-items-center mb-1">
-              <h5 class="fw-bold mb-0">{{ eq.nombre }}</h5>
-            </div>
-            <div class="d-flex align-baseline gap-2 my-2">
-              <span class="display-6 fw-bold">{{ eq.ventas }}</span>
-              <span class="text-muted small align-self-end mb-1">ventas</span>
-            </div>
-            
-            <div class="progress bg-secondary my-2" style="height: 6px;">
-              <div class="progress-bar bg-primary" [style.width]="eq.ancho"></div>
-            </div>
-
-            <div class="d-flex justify-content-between align-items-center mt-2 small">
-              <span class="text-success fw-semibold">✓ {{ eq.estado }}</span>
-              <span class="text-muted">Conversión {{ eq.conversion }} · {{ eq.asesoresCount }} asesores</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- TABLA: Desempeño por asesor -->
-      <div class="card bg-black border-secondary text-light p-4 mb-4">
-        <h5 class="fw-bold mb-1">Desempeño por asesor</h5>
-        <small class="text-muted mb-3 d-block">Últimos 30 días · meta prorrateada según días laborables</small>
-
-        <div class="table-responsive">
-          <table class="table table-dark table-hover align-middle mb-0 border-secondary">
-            <thead>
-              <tr class="text-muted small">
-                <th>ASESOR</th>
-                <th>EQUIPO</th>
-                <th>CAMPAÑA</th>
-                <th>GESTIONES</th>
-                <th>VENTAS</th>
-                <th>CONVERSIÓN</th>
-                <th style="width: 220px;">AVANCE DE META</th>
-                <th>ESTADO</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr *ngFor="let a of asesoresDetalle">
-                <td class="fw-bold">{{ a.nombre }}</td>
-                <td class="text-muted">{{ a.equipo }}</td>
-                <td><span class="text-muted small">● {{ a.campana }}</span></td>
-                <td>{{ a.gestiones }}</td>
-                <td>{{ a.ventas }}</td>
-                <td>{{ a.conversion }}</td>
-                <td>
-                  <div class="d-flex align-items-center gap-2">
-                    <div class="flex-grow-1 bg-secondary rounded" style="height: 6px;">
-                      <div class="bg-primary rounded h-100" [style.width]="a.anchoAvance"></div>
-                    </div>
-                    <span class="small fw-semibold" style="width: 40px; text-align: right;">{{ a.avance }}</span>
-                  </div>
-                </td>
-                <td>
-                  <span class="badge" [ngClass]="a.estado === 'En meta' ? 'bg-success text-white' : 'bg-warning text-dark'">
-                    {{ a.estado === 'En meta' ? '✓ En meta' : '⚠ En riesgo' }}
-                  </span>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-    </div>
+    </app-kpi-card>
   </div>
+
+  <div class="col-xl-4">
+    <app-kpi-card titulo="Lima Centro" valor="127 ventas" variacion="109 %" [esPositivo]="true">
+      <div class="progress bg-secondary my-2" style="height: 6px;">
+        <div class="progress-bar bg-primary" style="width: 90%"></div>
+      </div>
+      <div class="d-flex justify-content-between small">
+        <span class="text-success">✓ En meta</span>
+        <span class="text-muted">Conversión 10,0 % · 4 asesores</span>
+      </div>
+    </app-kpi-card>
+  </div>
+
+  <div class="col-xl-4">
+    <app-kpi-card titulo="Remoto" valor="112 ventas" variacion="107 %" [esPositivo]="true">
+      <div class="progress bg-secondary my-2" style="height: 6px;">
+        <div class="progress-bar bg-primary" style="width: 80%"></div>
+      </div>
+      <div class="d-flex justify-content-between small">
+        <span class="text-success">✓ En meta</span>
+        <span class="text-muted">Conversión 8,7 % · 4 asesores</span>
+      </div>
+    </app-kpi-card>
+  </div>
+</div>
+
+<!-- 3. Componente compartido: DataTable para el desempeño -->
+<div class="card bg-black border-secondary text-light p-4 mb-4">
+  <h5 class="fw-bold mb-1">Desempeño por asesor</h5>
+  <small class="text-muted mb-4 d-block">Últimos 30 días · meta prorrateada según días laborables</small>
+
+  <app-data-table [columnas]="columnasAsesores">
+    <tr *ngFor="let a of asesores">
+      <td class="fw-bold">{{ a.nombre }}</td>
+      <td class="text-muted">{{ a.equipo }}</td>
+      <td><span class="text-muted small">● {{ a.campana }}</span></td>
+      <td>{{ a.gestiones }}</td>
+      <td>{{ a.ventas }}</td>
+      <td>{{ a.conversion }}</td>
+      <td>
+        <div class="d-flex align-items-center gap-2">
+          <div class="progress bg-dark flex-grow-1" style="height: 6px;">
+            <div class="progress-bar bg-primary" [style.width]="a.anchoAvance"></div>
+          </div>
+          <span class="small">{{ a.avance }}</span>
+        </div>
+      </td>
+      <td><span class="text-success small">{{ a.estado }}</span></td>
+    </tr>
+  </app-data-table>
 </div>
