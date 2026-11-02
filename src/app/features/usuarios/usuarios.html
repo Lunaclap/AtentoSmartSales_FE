@@ -1,0 +1,167 @@
+<div class="container-fluid mt-2 px-4">
+  
+  <!-- ================= VISTA 1: TABLA PRINCIPAL A PANTALLA COMPLETA ================= -->
+  <div *ngIf="!modoFormulario">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <div>
+        <h2 class="fw-bold mb-1 text-light">Maestro de Gestión de Usuarios</h2>
+        <p class="text-muted small mb-0">Administración general de accesos, credenciales y roles del sistema</p>
+      </div>
+      <button class="btn btn-primary fw-semibold px-4 shadow-sm" (click)="abrirNuevoUsuario()">
+        + Nuevo Usuario
+      </button>
+    </div>
+
+    <!-- Indicador de carga -->
+    <div *ngIf="cargando" class="text-center py-5 text-muted">
+      <div class="spinner-border text-primary mb-2" role="status"></div>
+      <p>Cargando registros de usuarios...</p>
+    </div>
+
+    <!-- Tabla principal -->
+    <div *ngIf="!cargando" class="card bg-black border-secondary text-light shadow-sm p-4">
+      <div class="table-responsive">
+        <table class="table table-dark table-hover align-middle mb-0 border-secondary">
+          <thead>
+            <tr class="text-muted small">
+              <th>ID</th>
+              <th>USUARIO</th>
+              <th>APELLIDOS Y NOMBRES</th>
+              <th>DOCUMENTO</th>
+              <th>ROL</th>
+              <th>ESTADO</th>
+              <th class="text-end">ACCIONES</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let u of usuarios" (click)="seleccionarUsuarioParaEditar(u)" style="cursor: pointer;" title="Haz clic para editar">
+              <td class="fw-bold text-primary">{{ u.id }}</td>
+              <td>{{ u.username }}</td>
+              <td>{{ u.apellidos }}, {{ u.nombres }}</td>
+              <td><span class="text-muted small">{{ u.tipoDocumento }}:</span> {{ u.numeroDocumento }}</td>
+              <td><span class="badge bg-secondary text-dark fw-semibold">{{ u.role }}</span></td>
+              <td>
+                <span class="badge" [ngClass]="u.activo ? 'bg-success text-white' : 'bg-danger text-white'">
+                  {{ u.activo ? 'Activo' : 'Inactivo' }}
+                </span>
+              </td>
+              <td class="text-end">
+                <button class="btn btn-sm" [ngClass]="u.activo ? 'btn-outline-danger' : 'btn-outline-success'"
+                        (click)="toggleEstado(u, $event)">
+                  {{ u.activo ? 'Deshabilitar' : 'Activar' }}
+                </button>
+              </td>
+            </tr>
+            <tr *ngIf="usuarios.length === 0">
+              <td colspan="7" class="text-center text-muted py-4">No hay usuarios registrados en el sistema.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ================= VISTA 2: FORMULARIO DE CREACIÓN / EDICIÓN ================= -->
+  <div *ngIf="modoFormulario">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <div>
+        <h2 class="fw-bold mb-1 text-light">{{ esEdicion ? 'Actualizar Usuario' : 'Registrar Nuevo Usuario' }}</h2>
+        <p class="text-muted small mb-0">Complete la información solicitada en el formulario</p>
+      </div>
+      <button class="btn btn-outline-secondary text-light fw-semibold px-3" (click)="volverATabla()">
+        ← Volver al listado
+      </button>
+    </div>
+
+    <div class="card bg-black border-secondary text-light p-4 shadow-sm" style="max-width: 800px; margin: 0 auto;">
+      
+      <!-- Formulario Reactivo (No se envía con Enter accidental) -->
+      <form [formGroup]="usuarioForm" (ngSubmit)="$event.preventDefault()">
+        
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            <label class="form-label text-light">Nombres</label>
+            <input type="text" class="form-control bg-dark text-light border-secondary" formControlName="nombres" placeholder="Ej. Juan Carlos">
+            <div *ngIf="usuarioForm.get('nombres')?.invalid && usuarioForm.get('nombres')?.touched" class="text-danger small mt-1">
+              El nombre es obligatorio.
+            </div>
+          </div>
+
+          <div class="col-md-6 mb-3">
+            <label class="form-label text-light">Apellidos</label>
+            <input type="text" class="form-control bg-dark text-light border-secondary" formControlName="apellidos" placeholder="Ej. Pérez Gómez">
+            <div *ngIf="usuarioForm.get('apellidos')?.invalid && usuarioForm.get('apellidos')?.touched" class="text-danger small mt-1">
+              Los apellidos son obligatorios.
+            </div>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="col-md-4 mb-3">
+            <label class="form-label text-light">Tipo de Documento</label>
+            <select class="form-select bg-dark text-light border-secondary" formControlName="tipoDocumento">
+              <option value="DNI">DNI</option>
+              <option value="RUC">RUC</option>
+              <option value="CE">Carné de Extranjería</option>
+            </select>
+          </div>
+
+          <div class="col-md-8 mb-3">
+            <label class="form-label text-light">Número de Documento</label>
+            <input type="text" class="form-control bg-dark text-light border-secondary" formControlName="numeroDocumento" placeholder="Ingrese número">
+            <div *ngIf="usuarioForm.get('numeroDocumento')?.invalid && usuarioForm.get('numeroDocumento')?.touched" class="text-danger small mt-1">
+              Número de documento válido requerido.
+            </div>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            <label class="form-label text-light">Nombre de Usuario (Username)</label>
+            <input type="text" class="form-control bg-dark text-light border-secondary" formControlName="username" placeholder="Ej. jperez">
+            <div *ngIf="usuarioForm.get('username')?.invalid && usuarioForm.get('username')?.touched" class="text-danger small mt-1">
+              El username es obligatorio (min. 3 caracteres).
+            </div>
+          </div>
+
+          <div class="col-md-6 mb-3">
+            <label class="form-label text-light">Contraseña {{ esEdicion ? '(Opcional)' : '' }}</label>
+            <input type="password" class="form-control bg-dark text-light border-secondary" formControlName="password" placeholder="••••••••">
+            <div *ngIf="usuarioForm.get('password')?.invalid && usuarioForm.get('password')?.touched" class="text-danger small mt-1">
+              La contraseña debe tener al menos 6 caracteres.
+            </div>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="col-md-6 mb-4">
+            <label class="form-label text-light">Rol del Sistema</label>
+            <select class="form-select bg-dark text-light border-secondary" formControlName="role">
+              <option value="ROLE_ADMIN">ROLE_ADMIN (Administrador)</option>
+              <option value="ROLE_MANAGER">ROLE_MANAGER (Gerente)</option>
+              <option value="ROLE_ASESOR">ROLE_ASESOR (Asesor)</option>
+            </select>
+          </div>
+
+          <div class="col-md-6 mb-4 d-flex align-items-center">
+            <div class="form-check form-switch mt-4">
+              <input class="form-check-input" type="checkbox" role="switch" id="activoSwitch" formControlName="activo">
+              <label class="form-check-label text-light ms-2" for="activoSwitch">Usuario Activo</label>
+            </div>
+          </div>
+        </div>
+
+        <!-- Botón explícito de guardado -->
+        <div class="d-flex justify-content-end gap-2">
+          <button type="button" class="btn btn-secondary px-4" (click)="volverATabla()">Cancelar</button>
+          <button type="button" class="btn btn-primary px-4 fw-semibold" (click)="guardarUsuario()">
+            {{ esEdicion ? 'Actualizar Cambios' : 'Guardar Usuario' }}
+          </button>
+        </div>
+
+      </form>
+    </div>
+  </div>
+
+</div>

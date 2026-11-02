@@ -1,18 +1,24 @@
-import { Component, inject } from '@angular/core';
+import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router, RouterLink, RouterLinkActive } from '@angular/router';
+import { Router, RouterModule } from '@angular/router';
+import { AuthService } from '../../../core/services/auth.service'; // Ajusta la ruta relativa según dónde esté tu sidebar
 
 @Component({
   selector: 'app-sidebar',
   standalone: true,
-  imports: [CommonModule, RouterLink, RouterLinkActive],
+  imports: [CommonModule, RouterModule],
   templateUrl: './sidebar.html',
   styleUrl: './sidebar.css'
 })
 export class SidebarComponent {
-  private router = inject(Router);
 
-  cerrarSesion() {
-    this.router.navigate(['/']);
+  constructor(private authService: AuthService, private router: Router) {}
+
+  onLogout(): void {
+    // 1. Borra el token y los datos del almacenamiento local
+    this.authService.logout();
+    
+    // 2. Redirige al usuario al login
+    this.router.navigate(['/']); 
   }
 }
