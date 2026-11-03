@@ -1,42 +1,66 @@
-<app-page-head titulo="Reportes" sub="Arma el informe que necesitas para tu reunión de seguimiento" [fecha]="false">
-  <button type="button" class="btn pri" (click)="copiarCsv()">Copiar como CSV</button>
+<app-page-head titulo="Reportes por asesor" sub="Gestiones, cierres, venta promedio y avance de meta de cada asesor" [fecha]="false">
+  <button type="button" class="btn" (click)="copiarCsv()" [disabled]="!r()">Copiar como CSV</button>
 </app-page-head>
 
-<!-- Parámetros del reporte -->
+<div class="filters">
+  <label class="sr" for="rp">Mes</label>
+  <select id="rp" class="sel" [ngModel]="periodo()" (ngModelChange)="periodo.set($event); cargar()">
+    @for (p of meses; track p.valor) { <option [value]="p.valor">{{ p.texto }}</option> }
+  </select>
+  <label class="sr" for="rc">Campaña</label>
+  <select id="rc" class="sel" [ngModel]="campanaId()" (ngModelChange)="campanaId.set($event); cargar()">
+    <option [ngValue]="null">Todas las campañas</option>
+    @for (c of catalogo()?.campanas ?? []; track c.id) { <option [ngValue]="c.id">{{ c.nombre }}</option> }
+  </select>
+  <label class="sr" for="rm">Modalidad</label>
+  <select id="rm" class="sel" [ngModel]="modalidadId()" (ngModelChange)="modalidadId.set($event); cargar()">
+    <option [ngValue]="null">Todas las modalidades</option>
+    @for (m of catalogo()?.modalidades ?? []; track m.id) { <option [ngValue]="m.id">{{ m.nombre }}</option> }
+  </select>
+  @if (hayFiltros()) { <button type="button" class="link" (click)="limpiar()">Quitar filtros</button> }
+</div>
+
 <section class="card">
-  <div class="card-h"><div><h2>Parámetros del reporte</h2></div></div>
-  <app-filter-bar (filterChange)="onFiltroCambio($event)"></app-filter-bar>
-  <div class="filters" style="margin-top:12px">
-    <label for="rep-g" style="font-weight:600;font-size:13px">Agrupar por</label>
-    <select id="rep-g" class="sel" [ngModel]="grupo()" (ngModelChange)="grupo.set($event)">
-      @for (g of grupos; track g.v) { <option [value]="g.v">{{ g.t }}</option> }
-    </select>
-  </div>
+  @if (hayFiltros()) {
+    <p class="note" style="margin:0 0 14px">Con filtros, la meta y su avance se comparan con la meta total del asesor, que no se divide por campaña ni modalidad.</p>
+  }
+  @if (cargando()) {
+    <div class="empty"><div class="spin" role="status"></div>Cargando reporte…</div>
+  } @else if (r(); as r) {
+    <app-data-table [columnas]="columnas" [derecha]="derecha">
+      @for (f of r.filas; track f.asesorId) {
+        <tr>
+          <ng-container *ngTemplateOutlet="celdas; context: { $implicit: f }" />
+          <td class="r"><a class="btn sm" [routerLink]="['/reportes/asesor', f.asesorId]">Ver detalle</a></td>
+        </tr>
+      } @empty {
+        <tr><td colspan="9" class="empty">No hay asesores activos.</td></tr>
+      }
+      <tfoot>
+        <tr>
+          <ng-container *ngTemplateOutlet="celdas; context: { $implicit: r.total }" />
+          <td></td>
+        </tr>
+      </tfoot>
+    </app-data-table>
+  } @else {
+    <p class="empty">{{ error() }}</p>
+  }
 </section>
 
-<!-- Resultados -->
-<app-chart-panel [titulo]="'Resultados por ' + etiqueta().toLowerCase()" [subtitulo]="'Últimos ' + filtro().dias + ' días · ingreso estimado en soles'">
-  <app-data-table [columnas]="columnasReporte()" [derecha]="derecha">
-    @for (x of filas(); track x.k) {
-      <tr>
-        <td>{{ x.k }}</td>
-        <ng-container *ngTemplateOutlet="cifras; context: { $implicit: x }" />
-      </tr>
-    }
-    <tfoot>
-      <tr>
-        <td>Total</td>
-        <ng-container *ngTemplateOutlet="cifras; context: { $implicit: total() }" />
-      </tr>
-    </tfoot>
-  </app-data-table>
-</app-chart-panel>
-
-<ng-template #cifras let-x>
-  <td class="r">{{ num(x.g) }}</td>
-  <td class="r">{{ num(x.v) }}</td>
-  <td class="r">{{ pc(x.g ? x.v / x.g : 0) }}</td>
-  <td class="r">{{ money(x.mon) }}</td>
-  <td class="r">{{ money(x.v ? x.mon / x.v : 0) }}</td>
-  <td class="r">{{ pc(x.meta ? x.v / x.meta : 0, 0) }}</td>
+<ng-template #celdas let-f>
+  <td><b>{{ f.asesor }}</b></td>
+  <td class="r">{{ num(f.gestiones) }}</td>
+  <td class="r"><b>{{ num(f.cierres) }}</b></td>
+  <td class="r">{{ num(f.pendientes) }}</td>
+  <td class="r mono">{{ money(f.monto) }}</td>
+  <td class="r mono">{{ money(f.ticketPromedio) }}</td>
+  <td class="r">{{ num(f.meta) }}</td>
+  <td style="min-width:200px">
+    <div class="prog-row">
+      <div class="prog"><i [style.width.%]="f.avanceMeta * 100 > 100 ? 100 : f.avanceMeta * 100"></i></div>
+      <span class="mono">{{ pc(f.avanceMeta, 0) }}</span>
+    </div>
+    <app-pill [p]="metaPill(f.avanceMeta)" />
+  </td>
 </ng-template>

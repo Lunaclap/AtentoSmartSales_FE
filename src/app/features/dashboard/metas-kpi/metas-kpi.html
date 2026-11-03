@@ -1,44 +1,45 @@
-<app-page-head titulo="Metas y configuración de KPI" sub="Define la meta mensual de ventas de cada asesor" />
+<app-page-head titulo="Metas" sub="Ventas cerradas que se espera de cada asesor en el mes" [fecha]="false">
+  <label class="sr" for="mp">Mes</label>
+  <select id="mp" class="sel" [ngModel]="periodo()" (ngModelChange)="periodo.set($event); cargar()">
+    @for (p of meses; track p.valor) { <option [value]="p.valor">{{ p.texto }}</option> }
+  </select>
+</app-page-head>
 
-<div class="g2">
-  <!-- Meta mensual por asesor -->
-  <section class="card">
-    <div class="card-h">
-      <div>
-        <h2>Meta mensual por asesor</h2>
-        <p class="sub">Ventas cerradas por mes. Los indicadores se recalculan al guardar.</p>
-      </div>
-    </div>
-    <form novalidate (ngSubmit)="guardar()">
-      <app-data-table [columnas]="columnasMetas" [derecha]="['Meta mensual']">
-        @for (a of asesoresMetas; track a.id) {
-          <tr>
-            <td class="nm"><b>{{ a.n }}</b></td>
-            <td>{{ a.eq }}</td>
-            <td><app-camp-chip [id]="a.camp" /></td>
-            <td class="r">
-              <label class="sr" [for]="'m' + a.id">Meta de {{ a.n }}</label>
-              <input [id]="'m' + a.id" class="inp" type="number" min="1" max="200" step="1" style="width:90px;text-align:right"
-                     [(ngModel)]="a.metaMensual" [name]="'m' + a.id" />
-            </td>
-          </tr>
-        }
-      </app-data-table>
-      <p class="err" aria-live="polite">{{ error() }}</p>
-      <div class="row-actions"><button type="submit" class="btn pri">Guardar metas</button></div>
-    </form>
-  </section>
-
-  <!-- Definición de KPI -->
-  <section class="card">
-    <div class="card-h"><div><h2>Definición de KPI</h2><p class="sub">Así se calcula cada indicador</p></div></div>
-    <dl class="dl" style="grid-template-columns:1fr">
-      @for (k of definiciones; track k.t) {
-        <div>
-          <dt style="font-weight:600;color:var(--ink)">{{ k.t }}</dt>
-          <dd style="color:var(--ink-2)">{{ k.d }}</dd>
-        </div>
+<section class="card">
+  @if (cargando()) {
+    <div class="empty"><div class="spin" role="status"></div>Cargando metas…</div>
+  } @else if (error()) {
+    <p class="empty">{{ error() }}</p>
+  } @else {
+    <app-data-table [columnas]="columnas" [derecha]="['Cierres del mes', 'Mes anterior']">
+      @for (f of filas(); track f.asesorId) {
+        <tr>
+          <td><b>{{ f.asesor }}</b></td>
+          <td>
+            <label class="sr" [for]="'m' + f.asesorId">Meta de {{ f.asesor }}</label>
+            <input [id]="'m' + f.asesorId" class="inp" type="number" min="1" max="500" step="1" style="width:110px"
+                   [ngModel]="valores()[f.asesorId]" (ngModelChange)="cambiar(f.asesorId, $event)"
+                   [attr.aria-invalid]="invalidos().has(f.asesorId) ? true : null" />
+          </td>
+          <td class="r"><b>{{ num(f.cierres) }}</b></td>
+          <td class="r">{{ num(f.cierresMesAnterior) }}</td>
+          <td style="min-width:200px">
+            <div class="prog-row">
+              <div class="prog"><i [style.width.%]="avance(f) * 100 > 100 ? 100 : avance(f) * 100"></i></div>
+              <span class="mono">{{ pc(avance(f), 0) }}</span>
+            </div>
+          </td>
+        </tr>
+      } @empty {
+        <tr><td colspan="5" class="empty">No hay asesores activos.</td></tr>
       }
-    </dl>
-  </section>
-</div>
+    </app-data-table>
+
+    <div class="row-actions" style="margin-top:16px;justify-content:space-between">
+      <span class="hint">Meta del equipo: <b>{{ num(total()) }}</b> ventas cerradas</span>
+      <button type="button" class="btn pri" [disabled]="guardando() || !cambios()" (click)="guardar()">
+        {{ guardando() ? 'Guardando…' : 'Guardar metas' }}
+      </button>
+    </div>
+  }
+</section>

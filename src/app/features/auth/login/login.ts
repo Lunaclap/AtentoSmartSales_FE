@@ -5,6 +5,7 @@ import { Router } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
 import { LoginRequest } from '../../../core/models/auth.model';
 import { IconComponent } from '../../../shared/components/icon/icon';
+import { inicioPorRol } from '../../../core/guards/rol.guard';
 
 @Component({
   selector: 'app-login',
@@ -49,8 +50,8 @@ export class LoginComponent {
     this.authService.login(this.credentials).subscribe({
       next: () => {
         this.cargando.set(false);
-        // Redirigir al dashboard principal de tu Call Center
-        this.router.navigate(['/dashboard']);
+        // Gerente y administrador van al dashboard; el asesor, a su reporte
+        this.router.navigate(['/', inicioPorRol()]);
       },
       error: (err) => {
         console.error('Error de autenticación:', err);

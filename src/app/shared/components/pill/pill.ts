@@ -1,9 +1,8 @@
-import { Component, inject, input } from '@angular/core';
+import { Component, input } from '@angular/core';
 import { IconComponent } from '../icon/icon';
-import { Pill } from '../../utils/formato';
-import { DemoDataService } from '../../../core/services/demo-data.service';
+import { Pill, colorCampana } from '../../utils/formato';
 
-/** Etiqueta de estado con icono (En meta, Cerrado, Venta...). */
+/** Etiqueta de estado con icono (En meta, Aprobado, Cerrado...). */
 @Component({
   selector: 'app-pill',
   standalone: true,
@@ -14,13 +13,17 @@ export class PillComponent {
   p = input.required<Pill>();
 }
 
-/** Punto de color con el nombre de la campaña. */
+/** Punto de color con el nombre de la campaña; "-" si el cliente aún no tiene campaña (REQ-07). */
 @Component({
   selector: 'app-camp-chip',
   standalone: true,
-  template: `<span class="camp"><i [style.background]="data.campana(id()).col"></i>{{ data.campana(id()).n }}</span>`
+  template: `
+    @if (nombre(); as n) {
+      <span class="camp"><i [style.background]="color(n)"></i>{{ n }}</span>
+    } @else { - }
+  `
 })
 export class CampChipComponent {
-  id = input.required<string>();
-  data = inject(DemoDataService);
+  nombre = input<string | null>(null);
+  color = colorCampana;
 }

@@ -1,110 +1,90 @@
-@let d = vm();
+<app-page-head titulo="Dashboard comercial" sub="Resumen del mes: cierres, metas, campañas y estado de la cartera">
+  <label class="sr" for="dp">Mes</label>
+  <select id="dp" class="sel" [ngModel]="periodo()" (ngModelChange)="periodo.set($event); cargar()">
+    @for (p of meses; track p.valor) { <option [value]="p.valor">{{ p.texto }}</option> }
+  </select>
+</app-page-head>
 
-<app-page-head titulo="Dashboard comercial" sub="Resumen de ventas y clientes del área · datos de ejemplo" />
+@if (error()) { <section class="card"><p class="empty">{{ error() }}</p></section> }
+@if (!d() && !error()) { <section class="card"><div class="empty"><div class="spin" role="status"></div>Cargando resumen…</div></section> }
 
-<!-- Filtros superiores -->
-<app-filter-bar (filterChange)="onFiltroCambio($event)"></app-filter-bar>
+@if (d(); as d) {
+  <section class="kpis" aria-label="Indicadores clave">
+    <app-kpi-card titulo="Cierres del mes" tip="Ventas en estado Cerrado registradas en el mes" [valor]="num(d.cierres)"
+                  [variacion]="variacion(d.cierres, d.cierresMesAnterior)" [esPositivo]="d.cierres >= d.cierresMesAnterior">
+      <span class="kpi-d">Mes anterior: {{ num(d.cierresMesAnterior) }}</span>
+      <app-spark [valores]="spark()" />
+    </app-kpi-card>
 
-<!-- FILA 1: Tarjetas KPI -->
-<section class="kpis" aria-label="Indicadores clave">
-  <app-kpi-card titulo="Ventas cerradas" [valor]="num(d.cur.v)"
-                [variacion]="delta(d.cur.v, d.prev?.v)" [esPositivo]="d.cur.v >= (d.prev?.v ?? 0)">
-    @if (!d.prev) { <span class="kpi-d">Sin periodo previo comparable</span> }
-    <app-spark [valores]="d.sparkVentas" />
-  </app-kpi-card>
+    <app-kpi-card titulo="Avance de meta del equipo" tip="Cierres ÷ suma de las metas de los asesores" [valor]="pc(d.avanceMeta, 0)">
+      <div class="prog" role="img" [attr.aria-label]="'Avance de meta ' + pc(d.avanceMeta, 0)">
+        <i [style.width.%]="d.avanceMeta * 100 > 100 ? 100 : d.avanceMeta * 100"></i>
+      </div>
+      <span class="kpi-d"><app-pill [p]="metaPill(d.avanceMeta)" /> Meta: {{ num(d.meta) }} · {{ dec(d.avancePromedioDiario) }} cierres/día</span>
+    </app-kpi-card>
 
-  <app-kpi-card titulo="Tasa de conversión" tip="Ventas ÷ gestiones realizadas" [valor]="pc(d.cur.conv)"
-                [variacion]="delta(d.cur.conv, d.prev?.conv)" [esPositivo]="d.cur.conv >= (d.prev?.conv ?? 0)">
-    @if (!d.prev) { <span class="kpi-d">Sin periodo previo comparable</span> }
-    <app-spark [valores]="d.sparkConv" color="var(--c2)" />
-  </app-kpi-card>
+    <app-kpi-card titulo="Monto de venta promedio" tip="Monto cerrado ÷ cierres" [valor]="money(d.ticketPromedio)">
+      <span class="kpi-d">{{ money(d.monto) }} cerrados en el mes</span>
+    </app-kpi-card>
 
-  <app-kpi-card titulo="Venta promedio" tip="Ingreso estimado total ÷ ventas cerradas" [valor]="money(d.cur.tick)"
-                [variacion]="delta(d.cur.tick, d.prev?.tick)" [esPositivo]="d.cur.tick >= (d.prev?.tick ?? 0)">
-    @if (!d.prev) { <span class="kpi-d">Sin periodo previo comparable</span> }
-    <span class="kpi-d">Ingreso estimado por venta</span>
-  </app-kpi-card>
-
-  <app-kpi-card titulo="Meta cumplida" tip="Ventas ÷ meta prorrateada del periodo" [valor]="pc(d.cumplida, 0)">
-    <div class="prog" role="img" [attr.aria-label]="'Avance de meta ' + pc(d.cumplida, 0)">
-      <i [style.width.%]="d.cumplida * 100 > 100 ? 100 : d.cumplida * 100"></i>
-    </div>
-    <span class="kpi-d"><app-pill [p]="metaPill(d.cumplida)" /> Meta: {{ num(d.cur.meta) }} ventas</span>
-  </app-kpi-card>
-</section>
-
-<!-- FILA 2: Ventas por día y Embudo de gestión -->
-<div class="g2">
-  <app-chart-panel titulo="Ventas por día" [subtitulo]="d.sub">
-    <div acciones class="legend"><span><i></i>Ventas</span><span><i class="dash"></i>Meta diaria</span></div>
-    <app-line-chart [puntos]="d.serie" nombre="Ventas" />
-  </app-chart-panel>
-
-  <section class="card fun">
-    <div class="card-h"><div><h2>Embudo de gestión</h2><p class="sub">De la llamada a la venta</p></div></div>
-    <div class="hbs">
-      @for (x of d.embudo; track x.n; let i = $index) {
-        <div class="hb" [appTip]="x.tip">
-          <span class="hb-l">{{ x.n }}</span>
-          <span class="hb-t"><i [style.width.%]="x.w" [style.background]="rampa[i]"></i></span>
-          <span class="hb-v">{{ num(x.v) }}</span>
-        </div>
-      }
-    </div>
-    <p class="hint" style="margin:14px 0 0">
-      {{ pc(d.cur.g ? d.cur.ef / d.cur.g : 0, 0) }} de las gestiones llega a un contacto efectivo y
-      {{ pc(d.cur.ef ? d.cur.v / d.cur.ef : 0) }} de ellos termina en venta.
-    </p>
+    <app-kpi-card titulo="Gestiones del mes" tip="Llamadas registradas por los asesores" [valor]="num(d.gestiones)">
+      <span class="kpi-d">{{ num(d.pendientes) }} ventas pendientes de cierre</span>
+      <app-spark [valores]="sparkGestiones()" color="var(--c2)" />
+    </app-kpi-card>
   </section>
-</div>
 
-<!-- FILA 3: Ventas por asesor y Conversión por campaña -->
-<div class="g2e">
-  <app-chart-panel titulo="Ventas por asesor" subtitulo="Ordenado de mayor a menor">
-    <div class="hbs">
-      @for (x of d.ranking; track x.a.id) {
-        <div class="hb" [appTip]="x.tip">
-          <span class="hb-l">{{ x.a.n }}</span>
-          <span class="hb-t"><i [style.width.%]="x.w"></i></span>
-          <span class="hb-v">{{ x.v }}</span>
-        </div>
-      }
-    </div>
-  </app-chart-panel>
+  <div class="g2">
+    <app-chart-panel titulo="Cierres por día" subtitulo="Frente a la meta diaria del equipo">
+      <div acciones class="legend"><span><i></i>Cierres</span><span><i class="dash"></i>Meta diaria</span></div>
+      <app-line-chart [puntos]="serie()" nombre="Cierres" />
+    </app-chart-panel>
 
-  <app-chart-panel titulo="Conversión por campaña" subtitulo="Ventas ÷ gestiones del periodo">
-    <div class="vbs">
-      @for (x of d.campanas; track x.c.id) {
-        <div class="vb" [appTip]="x.tip">
-          <span class="vb-v">{{ pc(x.conv) }}</span>
-          <div class="vb-b"><i [style.height.%]="x.h" [style.background]="x.c.col"></i></div>
-          <span class="vb-l">{{ x.c.n }}</span>
-        </div>
-      }
-    </div>
-  </app-chart-panel>
-</div>
+    <app-chart-panel titulo="Cartera por estado de gestión" subtitulo="Todos los clientes, estado actual">
+      <div class="hbs">
+        @for (x of estados(); track x.n) {
+          <div class="hb" [appTip]="x.tip">
+            <span class="hb-l">{{ x.n }}</span>
+            <span class="hb-t"><i [style.width.%]="x.w" [style.background]="x.c"></i></span>
+            <span class="hb-v">{{ num(x.v) }}</span>
+          </div>
+        }
+      </div>
+      <a class="btn sm" routerLink="/clientes" style="margin-top:14px">Ver clientes</a>
+    </app-chart-panel>
+  </div>
 
-<!-- FILA 4: Clientes con seguimiento pendiente -->
-<app-chart-panel titulo="Clientes con seguimiento pendiente" subtitulo="Los más atrasados primero">
-  <a acciones class="btn sm" routerLink="/clientes">Ver todos los clientes</a>
-  <app-data-table [columnas]="columnasPendientes">
-    @for (c of d.pendientes; track c.id) {
-      <tr>
-        <td class="nm"><b>{{ c.nombre }}</b><span>{{ c.doc }}</span></td>
-        <td>{{ data.asesor(c.asesor).n }}</td>
-        <td><app-camp-chip [id]="c.camp" /></td>
-        <td>{{ data.rel(c.ultimo!) }}</td>
-        <td><span class="due" [class.late]="c.prox! < data.HOY">{{ data.seguimiento(c.prox!) }}</span></td>
-        <td><app-pill [p]="estadoPill(c.estado)" /></td>
-        <td class="r"><button type="button" class="btn sm" (click)="ficha.set(c)">Ver ficha</button></td>
-      </tr>
-    } @empty {
-      <tr><td colspan="7" class="empty">No hay seguimientos pendientes.</td></tr>
-    }
-  </app-data-table>
-</app-chart-panel>
+  <div class="g2e">
+    <app-chart-panel titulo="Avance de meta por asesor" subtitulo="Ordenado de mayor a menor avance">
+      <a acciones class="btn sm" routerLink="/reportes">Ver reporte</a>
+      <div class="list">
+        @for (a of d.asesores; track a.asesorId) {
+          <a class="li av-row" [routerLink]="['/reportes/asesor', a.asesorId]">
+            <span class="hb-l">{{ a.asesor }}</span>
+            <span class="prog-row" style="flex:1">
+              <span class="prog"><i [style.width.%]="a.avanceMeta * 100 > 100 ? 100 : a.avanceMeta * 100"></i></span>
+              <span class="mono">{{ a.cierres }}/{{ a.meta }}</span>
+            </span>
+          </a>
+        }
+      </div>
+    </app-chart-panel>
 
-@if (ficha(); as c) {
-  <app-client-drawer [cliente]="c" (cerrar)="ficha.set(null)" />
+    <app-chart-panel titulo="Cierres por campaña" subtitulo="Campañas con más cierres del mes">
+      <a acciones class="btn sm" routerLink="/campanas">Ver KPIs</a>
+      <div class="hbs">
+        @for (c of campanas(); track c.id) {
+          <div class="hb" [appTip]="c.tip">
+            <span class="hb-l">{{ c.campana }}</span>
+            <span class="hb-t"><i [style.width.%]="c.w" [style.background]="color(c.campana)"></i></span>
+            <span class="hb-v">{{ c.cierres }}</span>
+          </div>
+        }
+      </div>
+      <div class="list" style="margin-top:14px">
+        @for (c of campanas(); track c.id) {
+          <div class="li"><span>{{ c.campana }}</span><span class="hint">{{ money(c.monto) }} · conversión {{ pc(c.conversion) }}</span></div>
+        }
+      </div>
+    </app-chart-panel>
+  </div>
 }

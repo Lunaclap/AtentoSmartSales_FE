@@ -41,7 +41,28 @@ svg{display:block}
 .up,.down{display:inline-flex;align-items:center;gap:4px}
 
 /* ---- hosts de componentes Angular ---- */
-app-sidebar,app-page-head,app-filter-bar,app-chart-panel,app-data-table{display:contents}
+app-sidebar,app-page-head,app-chart-panel,app-data-table,app-detalle-asesor{display:contents}
+/* Ficha del cliente, formulario de venta y KPIs por campaña */
+.ficha-res{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+.ficha-res div{background:var(--surface-2);border-radius:10px;padding:10px;display:grid;gap:2px}
+.ficha-res b{font-family:var(--f-display);font-size:17px}
+.ficha-res span{font-size:11px;color:var(--ink-2)}
+.modal.wide{width:min(860px,100%)}
+.camp-card{border-top:4px solid var(--cc,var(--c1));display:grid;gap:14px;align-content:start}
+.camp-card .card-h{margin-bottom:0}
+.cc-big{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+.cc-big b{font-family:var(--f-display);font-size:40px;line-height:1;letter-spacing:-.02em}
+.cc-big>span:not(.kpi-d){color:var(--ink-2)}
+.av-row{color:inherit;text-decoration:none;gap:14px}
+.av-row:hover .hb-l{text-decoration:underline}
+.av-row .hb-l{width:140px;flex:none}
+.btn{white-space:nowrap}
+td.mono{white-space:nowrap}
+.nm .link{display:block;text-align:left;color:inherit}
+.acciones{display:grid;gap:6px;justify-items:end}
+.t-compacta th{white-space:normal;padding:8px}
+.t-compacta td{padding:10px 8px}
+@media (max-width:720px){.ficha-res{grid-template-columns:repeat(2,minmax(0,1fr))}}
 app-kpi-card{display:block;min-width:0}
 app-kpi-card .kpi{height:100%}
 app-chart-panel>.card{height:100%}
@@ -145,7 +166,7 @@ app-chart-panel>.card{height:100%}
 
 /* ---- barras ---- */
 .hbs{display:grid;gap:7px}
-.hb{display:grid;grid-template-columns:118px minmax(0,1fr) 44px;align-items:center;gap:10px;font-size:13px}
+.hb{display:grid;grid-template-columns:150px minmax(0,1fr) 44px;align-items:center;gap:10px;font-size:13px}
 .hb-l{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .hb-t{height:14px;border-radius:0 4px 4px 0;background:transparent;position:relative}
 .hb-t i{display:block;height:100%;background:var(--c1);border-radius:0 4px 4px 0}

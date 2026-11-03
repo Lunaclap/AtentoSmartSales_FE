@@ -55,7 +55,8 @@ export class LineChartComponent {
   g = computed(() => {
     const pts = this.puntos(), n = pts.length;
     const mx = Math.max(1, ...pts.map(p => Math.max(p.v, p.m)));
-    const step = pasoRedondo(mx * 1.08 / 4), max = step * 4;
+    // Paso mínimo de 1: los cierres son enteros y no tiene sentido un eje 0; 0,3; 0,6…
+    const step = Math.max(1, pasoRedondo(mx * 1.08 / 4)), max = step * 4;
     const X = (i: number) => n < 2 ? L : L + i * (W - L - R) / (n - 1);
     const Y = (v: number) => T + (H - T - B) * (1 - v / max);
 
