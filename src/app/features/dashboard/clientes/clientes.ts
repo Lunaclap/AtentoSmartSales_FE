@@ -1,39 +1,68 @@
-import { Component } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { DataTableComponent } from '../../../shared/components/data-table/data-table';
 import { ClientFormComponent } from '../../../shared/components/client-form/client-form';
+import { ClientDrawerComponent } from '../../../shared/components/client-drawer/client-drawer';
+import { PageHeadComponent } from '../../../shared/components/page-head/page-head';
+import { CampChipComponent, PillComponent } from '../../../shared/components/pill/pill';
+import { ToastService } from '../../../shared/components/toast/toast';
+import { Cliente, DemoDataService, NuevoCliente } from '../../../core/services/demo-data.service';
+import { estadoPill, sinTildes } from '../../../shared/utils/formato';
 
 @Component({
   selector: 'app-clientes',
   standalone: true,
-  imports: [CommonModule, FormsModule, DataTableComponent, ClientFormComponent],
+  imports: [CommonModule, FormsModule, DataTableComponent, ClientFormComponent, ClientDrawerComponent, PageHeadComponent, PillComponent, CampChipComponent],
   templateUrl: './clientes.html',
   styleUrl: './clientes.css'
 })
 export class ClientesComponent {
-  mostrarFormulario = false;
+  data = inject(DemoDataService);
+  private toast = inject(ToastService);
+  estadoPill = estadoPill;
+
+  mostrarFormulario = signal(false);
+  ficha = signal<Cliente | null>(null);
+  busqueda = signal('');
+  estado = signal('todos');
+  limite = signal(12);
 
   columnasClientes: string[] = [
-    'CLIENTE',
-    'ASESOR',
-    'CAMPAÑA',
-    'ESTADO',
-    'ÚLTIMO CONTACTO',
-    'PRÓXIMO SEGUIMIENTO',
-    'ACCIÓN'
+    'Cliente',
+    'Asesor',
+    'Campaña',
+    'Estado',
+    'Último contacto',
+    'Próximo seguimiento',
+    ''
   ];
 
-  clientesCartera = [
-    { nombre: 'Víctor Flores Salas', tipo: 'Persona', doc: '11731842', asesor: 'Andrea Rojas', campana: 'Préstamos', estado: 'Contactado', claseEstado: 'text-muted', ultimoContacto: 'Hoy', proximoSeguimiento: 'En 2 d' },
-    { nombre: 'Víctor Castillo Herrera', tipo: 'Persona', doc: '78771950', asesor: 'Diego Salazar', campana: 'Telefonía móvil', estado: 'Contactado', claseEstado: 'text-muted', ultimoContacto: 'Hoy', proximoSeguimiento: 'En 2 d' },
-    { nombre: 'Constructora Surco S.A.C.', tipo: 'Empresa', doc: '20144198825', asesor: 'Valeria Chávez', campana: 'Seguros de salud', estado: 'Cerrado', claseEstado: 'text-success', ultimoContacto: 'Hoy', proximoSeguimiento: '—' },
-    { nombre: 'Ana Ponce Díaz', tipo: 'Persona', doc: '14323886', asesor: 'Kevin Torres', campana: 'Préstamos', estado: 'Contactado', claseEstado: 'text-muted', ultimoContacto: 'Hoy', proximoSeguimiento: 'En 5 d' },
-    { nombre: 'Rosa Vera Torres', tipo: 'Persona', doc: '23771659', asesor: 'Camila Flores', campana: 'Telefonía móvil', estado: 'Contactado', claseEstado: 'text-muted', ultimoContacto: 'Hoy', proximoSeguimiento: 'En 3 d' },
-    { nombre: 'Raúl Medina Vargas', tipo: 'Persona', doc: '12885357', asesor: 'Valeria Chávez', campana: 'Seguros de salud', estado: 'Contactado', claseEstado: 'text-muted', ultimoContacto: 'Hoy', proximoSeguimiento: 'En 1 d' }
-  ];
+  lista = computed(() => {
+    const q = sinTildes(this.busqueda().trim()), est = this.estado();
+    return this.data.clientes()
+      .filter(c => (est === 'todos' || c.estado === est) && (!q || sinTildes(c.nombre).includes(q) || c.doc.includes(q)))
+      .sort((a, b) => (b.ultimo ?? -1) - (a.ultimo ?? -1));
+  });
+  visibles = computed(() => this.lista().slice(0, this.limite()));
+
+  buscar(q: string) {
+    this.busqueda.set(q);
+    this.limite.set(12);
+  }
+
+  filtrarEstado(e: string) {
+    this.estado.set(e);
+    this.limite.set(12);
+  }
 
   toggleFormulario() {
-    this.mostrarFormulario = !this.mostrarFormulario;
+    this.mostrarFormulario.update(v => !v);
+  }
+
+  guardarCliente(datos: NuevoCliente) {
+    const c = this.data.agregarCliente(datos);
+    this.mostrarFormulario.set(false);
+    this.toast.show('Cliente registrado: ' + c.nombre);
   }
 }

@@ -1,158 +1,121 @@
-import { Component, EventEmitter, Output } from '@angular/core';
+import { Component, EventEmitter, HostListener, Output, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { DemoDataService, NuevoCliente } from '../../../core/services/demo-data.service';
+import { IconComponent } from '../icon/icon';
 
+type Campo = 'nombre' | 'doc' | 'tel' | 'correo';
+
+/** Modal de registro de un cliente nuevo. Emite los datos validados en `onSubmit`. */
 @Component({
   selector: 'app-client-form',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, IconComponent],
   template: `
-    <div class="card bg-black border-secondary text-light p-4 shadow-lg rounded-4">
-      <!-- Cabecera -->
-      <div class="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom border-secondary">
-        <div>
-          <h4 class="fw-bold mb-1">Registro de Nuevo Cliente en Cartera</h4>
-          <p class="text-muted small mb-0">Añade un prospecto o cuenta corporativa para asignarlo a las campañas del call center.</p>
+    <div class="ov mid" (click)="cancelar()">
+      <form class="modal" role="dialog" aria-modal="true" aria-labelledby="m-t" novalidate
+            (click)="$event.stopPropagation()" (ngSubmit)="guardarCliente()">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px">
+          <div>
+            <h2 id="m-t">Nuevo cliente</h2>
+            <p class="sub">Registra los datos básicos para empezar a gestionarlo.</p>
+          </div>
+          <button type="button" class="close" (click)="cancelar()" aria-label="Cerrar"><app-icon name="x" /></button>
         </div>
-        <button type="button" class="btn btn-sm btn-outline-secondary text-light px-3" (click)="cancelar()">✕ Cerrar</button>
-      </div>
 
-      <form (ngSubmit)="guardarCliente()">
-        <div class="row g-4">
-          
-          <!-- SECCIÓN 1: DATOS GENERALES -->
-          <div class="col-12">
-            <h6 class="fw-bold text-primary mb-3">1. Datos de Identificación</h6>
-          </div>
+        <div class="field">
+          <label for="n-nom">Nombre o razón social *</label>
+          <input id="n-nom" class="inp" autocomplete="off" [(ngModel)]="cliente.nombre" name="nombre" [attr.aria-invalid]="err().nombre ? true : null" />
+          <span class="err">{{ err().nombre }}</span>
+        </div>
 
-          <div class="col-md-4">
-            <label class="form-label small text-muted">Tipo de Cliente</label>
-            <select class="form-select form-select-sm bg-black text-light border-secondary py-2" [(ngModel)]="cliente.tipo" name="tipo">
-              <option value="Persona">Persona Natural</option>
-              <option value="Empresa">Empresa / Razón Social</option>
+        <div class="two">
+          <div class="field">
+            <label for="n-tipo">Tipo de cliente *</label>
+            <select id="n-tipo" class="sel" [(ngModel)]="cliente.tipo" name="tipo">
+              <option value="Persona">Persona</option>
+              <option value="Empresa">Empresa</option>
             </select>
           </div>
+          <div class="field">
+            <label for="n-doc">Documento *</label>
+            <input id="n-doc" class="inp" inputmode="numeric" maxlength="11" [(ngModel)]="cliente.doc" name="doc"
+                   [placeholder]="cliente.tipo === 'Persona' ? 'DNI de 8 dígitos' : 'RUC de 11 dígitos'" [attr.aria-invalid]="err().doc ? true : null" />
+            <span class="err">{{ err().doc }}</span>
+          </div>
+        </div>
 
-          <div class="col-md-4">
-            <label class="form-label small text-muted">Tipo de Documento</label>
-            <select class="form-select form-select-sm bg-black text-light border-secondary py-2" [(ngModel)]="cliente.tipoDoc" name="tipoDoc">
-              <option value="DNI">DNI</option>
-              <option value="RUC">RUC</option>
-              <option value="CE">Carné de Extranjería</option>
+        <div class="two">
+          <div class="field">
+            <label for="n-tel">Teléfono *</label>
+            <input id="n-tel" class="inp" inputmode="numeric" maxlength="9" placeholder="9 dígitos" [(ngModel)]="cliente.tel" name="tel" [attr.aria-invalid]="err().tel ? true : null" />
+            <span class="err">{{ err().tel }}</span>
+          </div>
+          <div class="field">
+            <label for="n-mail">Correo</label>
+            <input id="n-mail" class="inp" type="email" placeholder="nombre@correo.com" [(ngModel)]="cliente.correo" name="correo" [attr.aria-invalid]="err().correo ? true : null" />
+            <span class="err">{{ err().correo }}</span>
+          </div>
+        </div>
+
+        <div class="two">
+          <div class="field">
+            <label for="n-ori">Origen del contacto *</label>
+            <select id="n-ori" class="sel" [(ngModel)]="cliente.origen" name="origen">
+              @for (o of data.origenes; track o) { <option [value]="o">{{ o }}</option> }
             </select>
           </div>
-
-          <div class="col-md-4">
-            <label class="form-label small text-muted">Número de Documento</label>
-            <input type="text" class="form-control form-control-sm bg-black text-light border-secondary py-2" [(ngModel)]="cliente.doc" name="doc" placeholder="Ej. 11731842" required />
-          </div>
-
-          <div class="col-12">
-            <label class="form-label small text-muted">Nombre Completo o Razón Social</label>
-            <input type="text" class="form-control form-control-sm bg-black text-light border-secondary py-2" [(ngModel)]="cliente.nombre" name="nombre" placeholder="Ej. Víctor Flores Salas / Constructora Surco S.A.C." required />
-          </div>
-
-
-          <!-- SECCIÓN 2: CONTACTO Y CANALES -->
-          <div class="col-12 pt-2">
-            <h6 class="fw-bold text-primary mb-3">2. Información de Contacto</h6>
-          </div>
-
-          <div class="col-md-6">
-            <label class="form-label small text-muted">Teléfono / Celular de Contacto</label>
-            <input type="text" class="form-control form-control-sm bg-black text-light border-secondary py-2" [(ngModel)]="cliente.telefono" name="telefono" placeholder="Ej. 987 654 321" required />
-          </div>
-
-          <div class="col-md-6">
-            <label class="form-label small text-muted">Correo Electrónico</label>
-            <input type="email" class="form-control form-control-sm bg-black text-light border-secondary py-2" [(ngModel)]="cliente.correo" name="correo" placeholder="Ej. correo&#64;dominio.com" />
-          </div>
-
-
-          <!-- SECCIÓN 3: ASIGNACIÓN OPERATIVA (CALL CENTER) -->
-          <div class="col-12 pt-2">
-            <h6 class="fw-bold text-primary mb-3">3. Asignación y Seguimiento Operativo</h6>
-          </div>
-
-          <div class="col-md-4">
-            <label class="form-label small text-muted">Asesor Asignado</label>
-            <select class="form-select form-select-sm bg-black text-light border-secondary py-2" [(ngModel)]="cliente.asesor" name="asesor" required>
-              <option value="Andrea Rojas">Andrea Rojas</option>
-              <option value="Diego Salazar">Diego Salazar</option>
-              <option value="Valeria Chávez">Valeria Chávez</option>
-              <option value="Kevin Torres">Kevin Torres</option>
-              <option value="Camila Flores">Camila Flores</option>
+          <div class="field">
+            <label for="n-as">Asesor asignado *</label>
+            <select id="n-as" class="sel" [(ngModel)]="cliente.asesor" name="asesor">
+              @for (a of data.asesores; track a.id) { <option [ngValue]="a.id">{{ a.n }}</option> }
             </select>
           </div>
+        </div>
 
-          <div class="col-md-4">
-            <label class="form-label small text-muted">Campaña Comercial</label>
-            <select class="form-select form-select-sm bg-black text-light border-secondary py-2" [(ngModel)]="cliente.campana" name="campana" required>
-              <option value="Préstamos">Préstamos Personales</option>
-              <option value="Telefonía móvil">Telefonía Móvil</option>
-              <option value="Seguros de salud">Seguros de Salud</option>
-            </select>
-          </div>
-
-          <div class="col-md-4">
-            <label class="form-label small text-muted">Estado Inicial</label>
-            <select class="form-select form-select-sm bg-black text-light border-secondary py-2" [(ngModel)]="cliente.estado" name="estado">
-              <option value="Contactado">Contactado</option>
-              <option value="Interesado">Interesado</option>
-              <option value="Cerrado">Cerrado (Venta Exitosa)</option>
-              <option value="No contesta">No contesta</option>
-            </select>
-          </div>
-
-          <div class="col-md-6 pt-2">
-            <label class="form-label small text-muted">Próximo Seguimiento</label>
-            <select class="form-select form-select-sm bg-black text-light border-secondary py-2" [(ngModel)]="cliente.proximoSeguimiento" name="proximoSeguimiento">
-              <option value="Hoy">Para hoy</option>
-              <option value="En 1 d">En 1 día</option>
-              <option value="En 2 d">En 2 días</option>
-              <option value="En 5 d">En 5 días</option>
-              <option value="—">Sin programar (—)</option>
-            </select>
-          </div>
-
-
-          <!-- BOTONES DE ACCIÓN -->
-          <div class="col-12 d-flex justify-content-end gap-3 pt-3 border-top border-secondary">
-            <button type="button" class="btn btn-outline-secondary px-4 py-2 text-light" (click)="cancelar()">Cancelar</button>
-            <button type="submit" class="btn btn-primary px-5 py-2 fw-semibold shadow">Guardar Cliente en Cartera</button>
-          </div>
-
+        <div class="row-actions">
+          <button type="button" class="btn" (click)="cancelar()">Cancelar</button>
+          <button type="submit" class="btn pri">Guardar cliente</button>
         </div>
       </form>
     </div>
   `
 })
 export class ClientFormComponent {
-  cliente = {
-    tipo: 'Persona',
-    tipoDoc: 'DNI',
-    doc: '',
+  data = inject(DemoDataService);
+
+  cliente: NuevoCliente = {
     nombre: '',
-    telefono: '',
+    tipo: 'Persona',
+    doc: '',
+    tel: '',
     correo: '',
-    asesor: 'Andrea Rojas',
-    campana: 'Préstamos',
-    estado: 'Contactado',
-    proximoSeguimiento: 'En 2 d'
+    origen: this.data.origenes[0],
+    asesor: 0
   };
 
-  @Output() onSubmit = new EventEmitter<any>();
+  err = signal<Partial<Record<Campo, string>>>({});
+
+  @Output() onSubmit = new EventEmitter<NuevoCliente>();
   @Output() onCancel = new EventEmitter<void>();
 
   guardarCliente() {
-    if (!this.cliente.doc || !this.cliente.nombre || !this.cliente.telefono) {
-      alert('Por favor completa los campos obligatorios (Documento, Nombre y Teléfono).');
-      return;
-    }
-    this.onSubmit.emit(this.cliente);
-    alert('¡Cliente registrado en la cartera exitosamente!');
+    const c = this.cliente;
+    const doc = c.doc.trim();
+    const dup = this.data.buscarDocumento(doc);
+    const reDoc = c.tipo === 'Persona' ? /^\d{8}$/ : /^\d{11}$/;
+    const e: Partial<Record<Campo, string>> = {};
+    if (c.nombre.trim().length < 3) e.nombre = 'Escribe el nombre o la razón social.';
+    if (!reDoc.test(doc)) e.doc = c.tipo === 'Persona' ? 'El DNI debe tener 8 dígitos.' : 'El RUC debe tener 11 dígitos.';
+    else if (dup) e.doc = 'Este documento ya está registrado a nombre de ' + dup.nombre + '.';
+    if (!/^9\d{8}$/.test(c.tel.trim())) e.tel = 'El teléfono debe tener 9 dígitos y empezar con 9.';
+    if (c.correo.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(c.correo.trim())) e.correo = 'Escribe un correo válido, por ejemplo nombre@correo.com.';
+    this.err.set(e);
+    if (Object.keys(e).length) return;
+    this.onSubmit.emit({ ...c, nombre: c.nombre.trim(), doc, tel: c.tel.trim(), correo: c.correo.trim() });
   }
 
+  @HostListener('document:keydown.escape')
   cancelar() {
     this.onCancel.emit();
   }

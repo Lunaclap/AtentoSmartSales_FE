@@ -1,73 +1,46 @@
-<!-- Cabecera de la vista -->
-<div class="mb-4">
-  <h2 class="fw-bold mb-1">Equipos y asesores</h2>
-  <p class="text-muted small mb-0">Compara equipos y detecta quién necesita apoyo</p>
+@let d = vm();
+
+<app-page-head titulo="Equipos y asesores" sub="Compara equipos y detecta quién necesita apoyo" />
+
+<app-filter-bar (filterChange)="onFiltroCambio($event)"></app-filter-bar>
+
+<!-- Resumen por equipo -->
+<div class="g3">
+  @for (t of d.equipos; track t.e) {
+    <article class="card team">
+      <h3>{{ t.e }}</h3>
+      <div class="big">{{ num(t.a.v) }} <small>ventas</small></div>
+      <div class="prog-row">
+        <div class="prog"><i [style.width.%]="t.cm * 100 > 100 ? 100 : t.cm * 100"></i></div>
+        <b>{{ pc(t.cm, 0) }}</b>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">
+        <app-pill [p]="metaPill(t.cm)" />
+        <span class="hint">Conversión {{ pc(t.a.conv) }} · {{ t.n }} asesores</span>
+      </div>
+    </article>
+  }
 </div>
 
-<!-- 1. Componente compartido: FilterBar -->
-<app-filter-bar></app-filter-bar>
-
-<!-- 2. Componente compartido: KpiCard para los Equipos -->
-<div class="row g-3 mb-4">
-  <div class="col-xl-4">
-    <app-kpi-card titulo="Lima Este" valor="135 ventas" variacion="121 %" [esPositivo]="true">
-      <div class="progress bg-secondary my-2" style="height: 6px;">
-        <div class="progress-bar bg-primary" style="width: 100%"></div>
-      </div>
-      <div class="d-flex justify-content-between small">
-        <span class="text-success">✓ En meta</span>
-        <span class="text-muted">Conversión 10,4 % · 4 asesores</span>
-      </div>
-    </app-kpi-card>
-  </div>
-
-  <div class="col-xl-4">
-    <app-kpi-card titulo="Lima Centro" valor="127 ventas" variacion="109 %" [esPositivo]="true">
-      <div class="progress bg-secondary my-2" style="height: 6px;">
-        <div class="progress-bar bg-primary" style="width: 90%"></div>
-      </div>
-      <div class="d-flex justify-content-between small">
-        <span class="text-success">✓ En meta</span>
-        <span class="text-muted">Conversión 10,0 % · 4 asesores</span>
-      </div>
-    </app-kpi-card>
-  </div>
-
-  <div class="col-xl-4">
-    <app-kpi-card titulo="Remoto" valor="112 ventas" variacion="107 %" [esPositivo]="true">
-      <div class="progress bg-secondary my-2" style="height: 6px;">
-        <div class="progress-bar bg-primary" style="width: 80%"></div>
-      </div>
-      <div class="d-flex justify-content-between small">
-        <span class="text-success">✓ En meta</span>
-        <span class="text-muted">Conversión 8,7 % · 4 asesores</span>
-      </div>
-    </app-kpi-card>
-  </div>
-</div>
-
-<!-- 3. Componente compartido: DataTable para el desempeño -->
-<div class="card bg-black border-secondary text-light p-4 mb-4">
-  <h5 class="fw-bold mb-1">Desempeño por asesor</h5>
-  <small class="text-muted mb-4 d-block">Últimos 30 días · meta prorrateada según días laborables</small>
-
-  <app-data-table [columnas]="columnasAsesores">
-    <tr *ngFor="let a of asesores">
-      <td class="fw-bold">{{ a.nombre }}</td>
-      <td class="text-muted">{{ a.equipo }}</td>
-      <td><span class="text-muted small">● {{ a.campana }}</span></td>
-      <td>{{ a.gestiones }}</td>
-      <td>{{ a.ventas }}</td>
-      <td>{{ a.conversion }}</td>
-      <td>
-        <div class="d-flex align-items-center gap-2">
-          <div class="progress bg-dark flex-grow-1" style="height: 6px;">
-            <div class="progress-bar bg-primary" [style.width]="a.anchoAvance"></div>
+<!-- Desempeño por asesor -->
+<app-chart-panel titulo="Desempeño por asesor" [subtitulo]="'Últimos ' + d.dias + ' días · meta prorrateada según días laborables'">
+  <app-data-table [columnas]="columnasAsesores" [derecha]="derecha">
+    @for (x of d.asesores; track x.a.id) {
+      <tr>
+        <td class="nm"><b>{{ x.a.n }}</b></td>
+        <td>{{ x.a.eq }}</td>
+        <td><app-camp-chip [id]="x.a.camp" /></td>
+        <td class="r">{{ num(x.p.g) }}</td>
+        <td class="r"><b>{{ x.p.v }}</b> / {{ num(x.m) }}</td>
+        <td class="r">{{ pc(x.p.g ? x.p.v / x.p.g : 0) }}</td>
+        <td style="min-width:150px">
+          <div class="prog-row">
+            <div class="prog"><i [style.width.%]="x.pm * 100 > 100 ? 100 : x.pm * 100"></i></div>
+            <b>{{ pc(x.pm, 0) }}</b>
           </div>
-          <span class="small">{{ a.avance }}</span>
-        </div>
-      </td>
-      <td><span class="text-success small">{{ a.estado }}</span></td>
-    </tr>
+        </td>
+        <td><app-pill [p]="metaPill(x.pm)" /></td>
+      </tr>
+    }
   </app-data-table>
-</div>
+</app-chart-panel>

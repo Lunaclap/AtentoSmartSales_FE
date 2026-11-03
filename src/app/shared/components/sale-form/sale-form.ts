@@ -1,153 +1,171 @@
-import { Component, EventEmitter, Output } from '@angular/core';
+import { Component, EventEmitter, Output, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { DemoDataService } from '../../../core/services/demo-data.service';
+import { money, num } from '../../utils/formato';
+
+export interface VentaNueva {
+  tipoDoc: string;
+  nroDoc: string;
+  nombreCliente: string;
+  campana: string;
+  producto: string;
+  monto: number | null;
+  asesor: number;
+  estado: string;
+  telefono: string;
+  observaciones: string;
+}
+
+type Campo = 'nroDoc' | 'nombreCliente' | 'monto' | 'telefono';
 
 @Component({
   selector: 'app-sale-form',
   standalone: true,
   imports: [CommonModule, FormsModule],
   template: `
-    <div class="card bg-black border-secondary text-light p-4 shadow-lg rounded-4">
-      <!-- Cabecera -->
-      <div class="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom border-secondary">
+    <div class="g2">
+      <form class="card" style="display:grid;gap:18px" novalidate (ngSubmit)="guardarVenta()">
         <div>
-          <h4 class="fw-bold mb-1">Registro Operativo de Venta / Call Center</h4>
-          <p class="text-muted small mb-0">Captura todos los parámetros del cierre de llamada para actualizar tableros y comisiones.</p>
+          <h2>Datos de la venta</h2>
+          <p class="sub">Los campos con * son obligatorios.</p>
         </div>
-        <button type="button" class="btn btn-sm btn-outline-secondary text-light px-3" (click)="cancelar()">✕ Cerrar</button>
-      </div>
 
-      <form (ngSubmit)="guardarVenta()">
-        <div class="row g-4">
-          
-          <!-- SECCIÓN 1: DATOS DEL CLIENTE -->
-          <div class="col-12">
-            <h6 class="fw-bold text-primary mb-3">1. Identificación del Cliente</h6>
-          </div>
-          
-          <div class="col-md-4">
-            <label class="form-label small text-muted">Tipo de Documento</label>
-            <select class="form-select form-select-sm bg-black text-light border-secondary py-2" [(ngModel)]="venta.tipoDoc" name="tipoDoc">
+        <h3 class="sec-t">1. Cliente</h3>
+        <div class="three">
+          <div class="field">
+            <label for="v-td">Tipo de documento *</label>
+            <select id="v-td" class="sel" [(ngModel)]="venta.tipoDoc" name="tipoDoc">
               <option value="DNI">DNI</option>
-              <option value="RUC">RUC (Empresa)</option>
-              <option value="CE">Carné de Extranjería</option>
+              <option value="RUC">RUC (empresa)</option>
+              <option value="CE">Carné de extranjería</option>
             </select>
           </div>
-
-          <div class="col-md-4">
-            <label class="form-label small text-muted">Número de Documento</label>
-            <input type="text" class="form-control form-control-sm bg-black text-light border-secondary py-2" [(ngModel)]="venta.nroDoc" name="nroDoc" placeholder="Ej. 48772910" required />
+          <div class="field">
+            <label for="v-doc">Número de documento *</label>
+            <input id="v-doc" class="inp" inputmode="numeric" [(ngModel)]="venta.nroDoc" name="nroDoc" placeholder="Ej. 48772910" [attr.aria-invalid]="err().nroDoc ? true : null" />
+            <span class="err">{{ err().nroDoc }}</span>
           </div>
-
-          <div class="col-md-4">
-            <label class="form-label small text-muted">Nombre o Razón Social</label>
-            <input type="text" class="form-control form-control-sm bg-black text-light border-secondary py-2" [(ngModel)]="venta.nombreCliente" name="nombreCliente" placeholder="Ej. Roberto Gómez Bolaños" required />
+          <div class="field">
+            <label for="v-tel">Teléfono</label>
+            <input id="v-tel" class="inp" inputmode="numeric" maxlength="9" [(ngModel)]="venta.telefono" name="telefono" placeholder="9 dígitos" [attr.aria-invalid]="err().telefono ? true : null" />
+            <span class="err">{{ err().telefono }}</span>
           </div>
+        </div>
+        <div class="field">
+          <label for="v-nom">Nombre o razón social *</label>
+          <input id="v-nom" class="inp" autocomplete="off" [(ngModel)]="venta.nombreCliente" name="nombreCliente" placeholder="Ej. Rosa Vera Torres" [attr.aria-invalid]="err().nombreCliente ? true : null" />
+          <span class="err">{{ err().nombreCliente }}</span>
+        </div>
 
-
-          <!-- SECCIÓN 2: DETALLES DE LA CAMPAÑA Y OPERACIÓN -->
-          <div class="col-12 pt-2">
-            <h6 class="fw-bold text-primary mb-3">2. Detalles de la Negociación</h6>
-          </div>
-
-          <div class="col-md-4">
-            <label class="form-label small text-muted">Campaña Asignada</label>
-            <select class="form-select form-select-sm bg-black text-light border-secondary py-2" [(ngModel)]="venta.campana" name="campana" required>
-              <option value="prestamos">● Préstamos Personales / Efectivo</option>
-              <option value="telefonia">● Telefonía Móvil (Postpago/Porta)</option>
-              <option value="seguros">● Seguros de Salud / Oncológicos</option>
+        <h3 class="sec-t">2. Negociación</h3>
+        <div class="two">
+          <div class="field">
+            <label for="v-camp">Campaña *</label>
+            <select id="v-camp" class="sel" [(ngModel)]="venta.campana" name="campana" (ngModelChange)="cambiarCampana($event)">
+              @for (c of data.campanas; track c.id) { <option [value]="c.id">{{ c.n }}</option> }
             </select>
           </div>
-
-          <div class="col-md-4">
-            <label class="form-label small text-muted">Subtipo de Operación</label>
-            <select class="form-select form-select-sm bg-black text-light border-secondary py-2" [(ngModel)]="venta.subtipo" name="subtipo">
-              <option value="linea-nueva">Línea Nueva / Crédito Directo</option>
-              <option value="portabilidad">Portabilidad numérica</option>
-              <option value="renovacion">Renovación de equipo / Ampliación</option>
+          <div class="field">
+            <label for="v-prod">Producto *</label>
+            <select id="v-prod" class="sel" [(ngModel)]="venta.producto" name="producto">
+              @for (p of productos(); track p) { <option [value]="p">{{ p }}</option> }
             </select>
           </div>
-
-          <div class="col-md-4">
-            <label class="form-label small text-muted">Monto de Cierre / Crédito (S/)</label>
-            <div class="input-group input-group-sm">
-              <span class="input-group-text bg-black text-muted border-secondary">S/</span>
-              <input type="number" class="form-control bg-black text-light border-secondary py-2" [(ngModel)]="venta.monto" name="monto" placeholder="1500.00" required />
-            </div>
+        </div>
+        <div class="two">
+          <div class="field">
+            <label for="v-monto">Ingreso estimado (S/) *</label>
+            <input id="v-monto" class="inp" type="number" min="1" step="10" inputmode="numeric" placeholder="Ej. 1200"
+                   [ngModel]="venta.monto" (ngModelChange)="venta.monto = $event; monto.set($event)" name="monto" [attr.aria-invalid]="err().monto ? true : null" />
+            <span class="err">{{ err().monto }}</span>
           </div>
-
-
-          <!-- SECCIÓN 3: ASESOR Y ESTADO DE VALIDACIÓN -->
-          <div class="col-12 pt-2">
-            <h6 class="fw-bold text-primary mb-3">3. Control y Auditoría Telefónica</h6>
-          </div>
-
-          <div class="col-md-4">
-            <label class="form-label small text-muted">Asesor Responsable</label>
-            <select class="form-select form-select-sm bg-black text-light border-secondary py-2" [(ngModel)]="venta.asesor" name="asesor" required>
-              <option value="diego-salazar">Diego Salazar</option>
-              <option value="lucia-quispe">Lucía Quispe</option>
-              <option value="fiorella-vega">Fiorella Vega</option>
-              <option value="marisol-huaman">Marisol Huamán</option>
+          <div class="field">
+            <label for="v-as">Asesor responsable *</label>
+            <select id="v-as" class="sel" [(ngModel)]="venta.asesor" name="asesor">
+              @for (a of data.asesores; track a.id) { <option [ngValue]="a.id">{{ a.n }}</option> }
             </select>
           </div>
+        </div>
 
-          <div class="col-md-4">
-            <label class="form-label small text-muted">Estado de Validación</label>
-            <select class="form-select form-select-sm bg-black text-light border-secondary py-2" [(ngModel)]="venta.estado" name="estado">
-              <option value="Aprobado">Aprobado (Venta Exitosa)</option>
-              <option value="Pendiente">Pendiente de Auditoría / Validación</option>
-              <option value="Observado">Observado por Calidad</option>
-            </select>
+        <fieldset class="field">
+          <legend>Estado de validación *</legend>
+          <div class="rchips">
+            @for (e of estados; track e) {
+              <label class="rchip"><input type="radio" name="estado" [value]="e" [(ngModel)]="venta.estado" /><span>{{ e }}</span></label>
+            }
           </div>
+        </fieldset>
 
-          <div class="col-md-4">
-            <label class="form-label small text-muted">Teléfono de Contacto</label>
-            <input type="text" class="form-control form-control-sm bg-black text-light border-secondary py-2" [(ngModel)]="venta.telefono" name="telefono" placeholder="987654321" />
-          </div>
+        <div class="field">
+          <label for="v-obs">Observaciones</label>
+          <textarea id="v-obs" maxlength="240" [(ngModel)]="venta.observaciones" name="observaciones" placeholder="Qué acordaron con el cliente"></textarea>
+        </div>
 
-
-          <!-- SECCIÓN 4: OBSERVACIONES -->
-          <div class="col-12 pt-2">
-            <h6 class="fw-bold text-primary mb-3">4. Comentarios de la Llamada</h6>
-            <textarea class="form-control bg-black text-light border-secondary" rows="3" [(ngModel)]="venta.observaciones" name="observaciones" placeholder="Ej. Cliente aceptó la oferta tras cotizar tasa preferencial. Audio de conformidad grabado satisfactoriamente..."></textarea>
-          </div>
-
-          <!-- BOTONES DE ACCIÓN -->
-          <div class="col-12 d-flex justify-content-end gap-3 pt-3 border-top border-secondary">
-            <button type="button" class="btn btn-outline-secondary px-4 py-2 text-light" (click)="cancelar()">Cancelar</button>
-            <button type="submit" class="btn btn-primary px-5 py-2 fw-semibold shadow">Guardar y Enviar Operación</button>
-          </div>
-
+        <div class="row-actions">
+          <button type="button" class="btn" (click)="cancelar()">Cancelar</button>
+          <button type="submit" class="btn pri">Guardar venta</button>
         </div>
       </form>
+
+      <aside class="card impact" aria-live="polite">
+        <div>
+          <h2>Impacto en los indicadores</h2>
+          <p class="sub">Cómo quedarían las cifras de los últimos 30 días con esta venta</p>
+        </div>
+        <div class="imp"><span>Ventas de los últimos 30 días</span><b>{{ num(base.v + 1) }}</b></div>
+        <div class="imp"><span>Ingreso estimado</span><b>{{ money(base.mon + (monto() || 0)) }}</b></div>
+        <div class="imp"><span>Venta promedio</span><b>{{ money((base.mon + (monto() || 0)) / (base.v + 1)) }}</b></div>
+        <div class="imp"><span>Comisión del asesor</span><b>{{ money(data.COMISION) }}</b></div>
+        <p class="note">Las ventas «Pendiente» u «Observado» se cuentan cuando calidad las aprueba.</p>
+      </aside>
     </div>
   `
 })
 export class SaleFormComponent {
-  venta = {
+  data = inject(DemoDataService);
+  money = money;
+  num = num;
+  estados = ['Aprobado', 'Pendiente', 'Observado'];
+
+  venta: VentaNueva = {
     tipoDoc: 'DNI',
     nroDoc: '',
     nombreCliente: '',
-    campana: 'prestamos',
-    subtipo: 'linea-nueva',
+    campana: this.data.campanas[0].id,
+    producto: this.data.campanas[0].prods[0],
     monto: null,
-    asesor: 'diego-salazar',
+    asesor: 0,
     estado: 'Aprobado',
     telefono: '',
     observaciones: ''
   };
 
-  @Output() onSubmit = new EventEmitter<any>();
+  private campana = signal(this.venta.campana);
+  productos = computed(() => this.data.campana(this.campana()).prods);
+  monto = signal<number | null>(null);
+  base = this.data.agregar(...this.data.rango(30), this.data.asesores.map(a => a.id));
+  err = signal<Partial<Record<Campo, string>>>({});
+
+  @Output() onSubmit = new EventEmitter<VentaNueva>();
   @Output() onCancel = new EventEmitter<void>();
 
+  cambiarCampana(id: string) {
+    this.campana.set(id);
+    this.venta.producto = this.data.campana(id).prods[0];
+  }
+
   guardarVenta() {
-    if (!this.venta.nroDoc || !this.venta.nombreCliente || !this.venta.monto) {
-      alert('Por favor completa los campos obligatorios (Documento, Nombre y Monto).');
-      return;
-    }
-    this.onSubmit.emit(this.venta);
-    alert('¡Operación de venta registrada y validada correctamente!');
+    const v = this.venta;
+    const reDoc = v.tipoDoc === 'DNI' ? /^\d{8}$/ : v.tipoDoc === 'RUC' ? /^\d{11}$/ : /^\d{9,12}$/;
+    const e: Partial<Record<Campo, string>> = {};
+    if (!reDoc.test(v.nroDoc.trim())) e.nroDoc = v.tipoDoc === 'DNI' ? 'El DNI debe tener 8 dígitos.' : v.tipoDoc === 'RUC' ? 'El RUC debe tener 11 dígitos.' : 'El carné debe tener entre 9 y 12 dígitos.';
+    if (v.nombreCliente.trim().length < 3) e.nombreCliente = 'Escribe el nombre o la razón social.';
+    if (!(Number(v.monto) > 0)) e.monto = 'Ingresa el ingreso estimado de la venta (mayor que cero).';
+    if (v.telefono.trim() && !/^9\d{8}$/.test(v.telefono.trim())) e.telefono = 'El teléfono debe tener 9 dígitos y empezar con 9.';
+    this.err.set(e);
+    if (Object.keys(e).length) return;
+    this.onSubmit.emit({ ...v, nroDoc: v.nroDoc.trim(), nombreCliente: v.nombreCliente.trim() });
   }
 
   cancelar() {

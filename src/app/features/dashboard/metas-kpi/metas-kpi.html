@@ -1,64 +1,44 @@
-<!-- Cabecera de la vista -->
-<div class="mb-4">
-  <h2 class="fw-bold mb-1">Metas y configuración de KPI</h2>
-  <p class="text-muted small mb-0">Define la meta mensual de ventas de cada asesor</p>
-</div>
+<app-page-head titulo="Metas y configuración de KPI" sub="Define la meta mensual de ventas de cada asesor" />
 
-<div class="row g-4">
-  <!-- Columna izquierda: Tabla con DataTable -->
-  <div class="col-xl-8">
-    <div class="card bg-black border-secondary text-light p-4">
-      <h5 class="fw-bold mb-1">Meta mensual por asesor</h5>
-      <small class="text-muted mb-4 d-block">Ventas cerradas por mes. Los indicadores se recalculan al guardar.</small>
-
-      <app-data-table [columnas]="columnasMetas">
-        <tr *ngFor="let a of asesoresMetas">
-          <td class="fw-bold">{{ a.nombre }}</td>
-          <td class="text-muted">{{ a.equipo }}</td>
-          <td><span class="text-muted small">● {{ a.campana }}</span></td>
-          <td style="width: 120px;">
-            <input 
-              type="number" 
-              class="form-control form-control-sm bg-dark text-light border-secondary text-center fw-semibold" 
-              [(ngModel)]="a.metaMensual" />
-          </td>
-        </tr>
-      </app-data-table>
-    </div>
-  </div>
-
-  <!-- Columna derecha: Definición de KPI -->
-  <div class="col-xl-4">
-    <div class="card bg-black border-secondary text-light p-4 h-100">
-      <h5 class="fw-bold mb-1">Definición de KPI</h5>
-      <small class="text-muted mb-4 d-block">Así se calcula cada indicador</small>
-
-      <div class="d-flex flex-column gap-3">
-        <div>
-          <h6 class="fw-bold mb-1 fs-6">Tasa de conversión</h6>
-          <p class="text-muted small mb-0">Ventas ÷ gestiones realizadas</p>
-        </div>
-
-        <div>
-          <h6 class="fw-bold mb-1 fs-6">Venta promedio</h6>
-          <p class="text-muted small mb-0">Ingreso estimado ÷ ventas cerradas</p>
-        </div>
-
-        <div>
-          <h6 class="fw-bold mb-1 fs-6">Meta cumplida</h6>
-          <p class="text-muted small mb-0">Ventas ÷ (meta mensual × días laborables del periodo ÷ 27)</p>
-        </div>
-
-        <div>
-          <h6 class="fw-bold mb-1 fs-6">Contacto efectivo</h6>
-          <p class="text-muted small mb-0">Gestión cuyo resultado no es «No contesta»</p>
-        </div>
-
-        <div>
-          <h6 class="fw-bold mb-1 fs-6">Comisión estimada</h6>
-          <p class="text-muted small mb-0">Regla de ejemplo: S/ 15 por venta</p>
-        </div>
+<div class="g2">
+  <!-- Meta mensual por asesor -->
+  <section class="card">
+    <div class="card-h">
+      <div>
+        <h2>Meta mensual por asesor</h2>
+        <p class="sub">Ventas cerradas por mes. Los indicadores se recalculan al guardar.</p>
       </div>
     </div>
-  </div>
+    <form novalidate (ngSubmit)="guardar()">
+      <app-data-table [columnas]="columnasMetas" [derecha]="['Meta mensual']">
+        @for (a of asesoresMetas; track a.id) {
+          <tr>
+            <td class="nm"><b>{{ a.n }}</b></td>
+            <td>{{ a.eq }}</td>
+            <td><app-camp-chip [id]="a.camp" /></td>
+            <td class="r">
+              <label class="sr" [for]="'m' + a.id">Meta de {{ a.n }}</label>
+              <input [id]="'m' + a.id" class="inp" type="number" min="1" max="200" step="1" style="width:90px;text-align:right"
+                     [(ngModel)]="a.metaMensual" [name]="'m' + a.id" />
+            </td>
+          </tr>
+        }
+      </app-data-table>
+      <p class="err" aria-live="polite">{{ error() }}</p>
+      <div class="row-actions"><button type="submit" class="btn pri">Guardar metas</button></div>
+    </form>
+  </section>
+
+  <!-- Definición de KPI -->
+  <section class="card">
+    <div class="card-h"><div><h2>Definición de KPI</h2><p class="sub">Así se calcula cada indicador</p></div></div>
+    <dl class="dl" style="grid-template-columns:1fr">
+      @for (k of definiciones; track k.t) {
+        <div>
+          <dt style="font-weight:600;color:var(--ink)">{{ k.t }}</dt>
+          <dd style="color:var(--ink-2)">{{ k.d }}</dd>
+        </div>
+      }
+    </dl>
+  </section>
 </div>

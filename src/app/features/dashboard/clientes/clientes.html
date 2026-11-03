@@ -1,51 +1,50 @@
-<!-- Cabecera de la vista -->
-<div class="d-flex justify-content-between align-items-center mb-4">
-  <div>
-    <h2 class="fw-bold mb-1">Clientes</h2>
-    <p class="text-muted small mb-0">Cartera completa del área · 96 clientes</p>
-  </div>
-  <button class="btn btn-sm btn-primary fw-semibold px-3" (click)="toggleFormulario()">
-    {{ mostrarFormulario ? 'Ver cartera' : 'Nuevo cliente' }}
-  </button>
+<app-page-head titulo="Clientes" [sub]="'Cartera completa del área · ' + lista().length + ' clientes'" [fecha]="false">
+  <button type="button" class="btn pri" (click)="toggleFormulario()">Nuevo cliente</button>
+</app-page-head>
+
+<!-- Búsqueda y filtro por estado -->
+<div class="filters">
+  <label class="sr" for="q">Buscar cliente</label>
+  <input id="q" class="inp" type="search" placeholder="Buscar por nombre o documento" autocomplete="off" style="min-width:260px"
+         [ngModel]="busqueda()" (ngModelChange)="buscar($event)" />
+  <label class="sr" for="est">Estado</label>
+  <select id="est" class="sel" [ngModel]="estado()" (ngModelChange)="filtrarEstado($event)">
+    <option value="todos">Todos los estados</option>
+    @for (e of data.estados; track e) { <option [value]="e">{{ e }}</option> }
+  </select>
 </div>
 
-<!-- Si se hace clic en 'Nuevo cliente', se muestra el componente compartido ClientForm -->
-<div *ngIf="mostrarFormulario" class="mb-4">
-  <app-client-form></app-client-form>
-</div>
-
-<!-- Vista normal de cartera utilizando el componente compartido DataTable -->
-<div *ngIf="!mostrarFormulario">
-  <!-- Barra de búsqueda y filtro por estado -->
-  <div class="d-flex flex-wrap gap-3 align-items-center mb-4">
-    <input 
-      type="text" 
-      class="form-control form-control-sm bg-black text-light border-secondary w-auto" 
-      style="min-width: 280px;" 
-      placeholder="Buscar por nombre o documento" />
-    
-    <select class="form-select form-select-sm bg-black text-light border-secondary w-auto">
-      <option value="todos">Todos los estados</option>
-      <option value="contactado">Contactado</option>
-      <option value="cerrado">Cerrado</option>
-    </select>
-  </div>
-
-  <!-- Componente compartido: DataTable -->
+<section class="card">
   <app-data-table [columnas]="columnasClientes">
-    <tr *ngFor="let c of clientesCartera">
-      <td>
-        <div class="fw-bold">{{ c.nombre }}</div>
-        <small class="text-muted">{{ c.tipo }} · {{ c.doc }}</small>
-      </td>
-      <td>{{ c.asesor }}</td>
-      <td><span class="text-muted small">● {{ c.campana }}</span></td>
-      <td><span [ngClass]="c.claseEstado">● {{ c.estado }}</span></td>
-      <td class="text-muted">{{ c.ultimoContacto }}</td>
-      <td>{{ c.proximoSeguimiento }}</td>
-      <td>
-        <button class="btn btn-sm btn-outline-secondary text-light py-1 px-2" style="font-size: 0.8rem;">Ver ficha</button>
-      </td>
-    </tr>
+    @for (c of visibles(); track c.id) {
+      <tr>
+        <td class="nm"><b>{{ c.nombre }}</b><span>{{ c.tipo }} · {{ c.doc }}</span></td>
+        <td>{{ data.asesor(c.asesor).n }}</td>
+        <td><app-camp-chip [id]="c.camp" /></td>
+        <td><app-pill [p]="estadoPill(c.estado)" /></td>
+        <td>{{ c.ultimo == null ? 'Sin contacto' : data.rel(c.ultimo) }}</td>
+        <td>
+          @if (c.prox == null) { — } @else {
+            <span class="due" [class.late]="c.prox < data.HOY">{{ c.prox < data.HOY ? 'Vencido' : data.rel(c.prox) }}</span>
+          }
+        </td>
+        <td class="r"><button type="button" class="btn sm" (click)="ficha.set(c)">Ver ficha</button></td>
+      </tr>
+    } @empty {
+      <tr><td colspan="7" class="empty">Ningún cliente coincide con la búsqueda.</td></tr>
+    }
   </app-data-table>
-</div>
+  @if (lista().length > limite()) {
+    <div style="text-align:center;margin-top:12px">
+      <button type="button" class="btn" (click)="limite.set(limite() + 12)">Mostrar más ({{ lista().length - limite() }} restantes)</button>
+    </div>
+  }
+</section>
+
+@if (ficha(); as c) {
+  <app-client-drawer [cliente]="c" (cerrar)="ficha.set(null)" />
+}
+
+@if (mostrarFormulario()) {
+  <app-client-form (onSubmit)="guardarCliente($event)" (onCancel)="mostrarFormulario.set(false)"></app-client-form>
+}

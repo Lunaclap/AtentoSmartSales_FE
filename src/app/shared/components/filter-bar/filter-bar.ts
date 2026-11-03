@@ -1,59 +1,57 @@
-import { Component, EventEmitter, Output } from '@angular/core';
+import { Component, EventEmitter, Output, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { DemoDataService, FILTRO_INICIAL, Filtro } from '../../../core/services/demo-data.service';
 
 @Component({
   selector: 'app-filter-bar',
   standalone: true,
   imports: [CommonModule, FormsModule],
   template: `
-    <div class="d-flex flex-wrap gap-3 align-items-center mb-4">
-      <!-- Selector de días con cambio dinámico de estilo -->
-      <div class="btn-group bg-black p-1 rounded border border-secondary">
-        <button 
-          type="button"
-          class="btn btn-sm border-0" 
-          [ngClass]="dias === 7 ? 'btn-primary text-white' : 'text-muted bg-transparent'" 
-          (click)="cambiarDias(7)">7 días</button>
-        <button 
-          type="button"
-          class="btn btn-sm border-0" 
-          [ngClass]="dias === 30 ? 'btn-primary text-white' : 'text-muted bg-transparent'" 
-          (click)="cambiarDias(30)">30 días</button>
-        <button 
-          type="button"
-          class="btn btn-sm border-0" 
-          [ngClass]="dias === 90 ? 'btn-primary text-white' : 'text-muted bg-transparent'" 
-          (click)="cambiarDias(90)">90 días</button>
+    <div class="filters">
+      <div class="seg" role="group" aria-label="Periodo">
+        @for (d of [7, 30, 90]; track d) {
+          <button type="button" [attr.aria-pressed]="dias === d" (click)="cambiarDias(d)">{{ d }} días</button>
+        }
       </div>
 
-      <!-- Select de campañas -->
-      <select class="form-select form-select-sm bg-black text-light border-secondary w-auto" [(ngModel)]="campana" (change)="onFilterChange()">
+      <label class="sr" for="f-camp">Campaña</label>
+      <select id="f-camp" class="sel" [(ngModel)]="campana" (ngModelChange)="onFilterChange()">
         <option value="todas">Todas las campañas</option>
-        <option value="prestamos">Préstamos</option>
-        <option value="telefonia">Telefonía móvil</option>
-        <option value="seguros">Seguros de salud</option>
+        @for (c of data.campanas; track c.id) { <option [value]="c.id">{{ c.n }}</option> }
       </select>
 
-      <!-- Select de equipos -->
-      <select class="form-select form-select-sm bg-black text-light border-secondary w-auto" [(ngModel)]="equipo" (change)="onFilterChange()">
+      <label class="sr" for="f-eq">Equipo</label>
+      <select id="f-eq" class="sel" [(ngModel)]="equipo" (ngModelChange)="onFilterChange()">
         <option value="todos">Todos los equipos</option>
-        <option value="lima-este">Lima Este</option>
-        <option value="lima-centro">Lima Centro</option>
-        <option value="remoto">Remoto</option>
+        @for (e of data.equipos; track e) { <option [value]="e">{{ e }}</option> }
       </select>
+
+      @if (dias !== inicial.dias || campana !== inicial.campana || equipo !== inicial.equipo) {
+        <button type="button" class="link" (click)="restablecer()">Restablecer filtros</button>
+      }
     </div>
   `
 })
 export class FilterBarComponent {
-  dias: number = 7;
-  campana: string = 'todas';
-  equipo: string = 'todos';
+  data = inject(DemoDataService);
+  inicial = FILTRO_INICIAL;
 
-  @Output() filterChange = new EventEmitter<any>();
+  dias: number = FILTRO_INICIAL.dias;
+  campana: string = FILTRO_INICIAL.campana;
+  equipo: string = FILTRO_INICIAL.equipo;
+
+  @Output() filterChange = new EventEmitter<Filtro>();
 
   cambiarDias(d: number) {
     this.dias = d;
+    this.onFilterChange();
+  }
+
+  restablecer() {
+    this.dias = FILTRO_INICIAL.dias;
+    this.campana = FILTRO_INICIAL.campana;
+    this.equipo = FILTRO_INICIAL.equipo;
     this.onFilterChange();
   }
 
