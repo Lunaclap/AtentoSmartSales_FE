@@ -245,3 +245,10 @@ tr.click:hover td{background:var(--surface-2)}
 }
 @media (max-width:560px){.kpis,.kpis.k3{grid-template-columns:minmax(0,1fr)}.two,.three{grid-template-columns:minmax(0,1fr)}.hb{grid-template-columns:92px minmax(0,1fr) 40px}.dl{grid-template-columns:1fr}.head h1{font-size:24px}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+/* Aviso de sesión cerrada por inactividad: queda por encima de todo, incluso de otros modales */
+.sesion-ov{z-index:60;background:rgba(0,0,0,.55)}
+.modal.sesion{width:min(420px,100%);text-align:center;justify-items:center;gap:12px;padding:28px 24px}
+.modal.sesion p{margin:0;color:var(--ink-2)}
+.modal.sesion .btn{margin-top:6px}
+.sesion-ic{display:grid;place-items:center;width:48px;height:48px;border-radius:50%;background:var(--warn-bg);color:var(--warn)}
+.sesion-ic svg{width:22px;height:22px}

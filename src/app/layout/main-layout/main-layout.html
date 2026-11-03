@@ -9,3 +9,7 @@
 </div>
 
 <app-toast></app-toast>
+
+@if (sesion.expirada()) {
+  <app-sesion-expirada />
+}
