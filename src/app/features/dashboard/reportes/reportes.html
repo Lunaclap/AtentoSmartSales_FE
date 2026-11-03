@@ -1,44 +1,66 @@
-<!-- Cabecera de la vista -->
-<div class="d-flex justify-content-between align-items-center mb-4">
-  <div>
-    <h2 class="fw-bold mb-1">Reportes</h2>
-    <p class="text-muted small mb-0">Arma el informe que necesitas para tu reunión de seguimiento</p>
-  </div>
-  <button class="btn btn-sm btn-primary fw-semibold px-3">Copiar como CSV</button>
+<app-page-head titulo="Reportes por asesor" sub="Gestiones, cierres, venta promedio y avance de meta de cada asesor" [fecha]="false">
+  <button type="button" class="btn" (click)="copiarCsv()" [disabled]="!r()">Copiar como CSV</button>
+</app-page-head>
+
+<div class="filters">
+  <label class="sr" for="rp">Mes</label>
+  <select id="rp" class="sel" [ngModel]="periodo()" (ngModelChange)="periodo.set($event); cargar()">
+    @for (p of meses; track p.valor) { <option [value]="p.valor">{{ p.texto }}</option> }
+  </select>
+  <label class="sr" for="rc">Campaña</label>
+  <select id="rc" class="sel" [ngModel]="campanaId()" (ngModelChange)="campanaId.set($event); cargar()">
+    <option [ngValue]="null">Todas las campañas</option>
+    @for (c of catalogo()?.campanas ?? []; track c.id) { <option [ngValue]="c.id">{{ c.nombre }}</option> }
+  </select>
+  <label class="sr" for="rm">Modalidad</label>
+  <select id="rm" class="sel" [ngModel]="modalidadId()" (ngModelChange)="modalidadId.set($event); cargar()">
+    <option [ngValue]="null">Todas las modalidades</option>
+    @for (m of catalogo()?.modalidades ?? []; track m.id) { <option [ngValue]="m.id">{{ m.nombre }}</option> }
+  </select>
+  @if (hayFiltros()) { <button type="button" class="link" (click)="limpiar()">Quitar filtros</button> }
 </div>
 
-<!-- Tarjeta de Parámetros del reporte con el componente FilterBar -->
-<div class="card bg-black border-secondary text-light p-4 mb-4">
-  <h5 class="fw-bold mb-3 small text-muted text-uppercase">Parámetros del reporte</h5>
-  
-  <!-- Uso de la barra de filtros compartida -->
-  <app-filter-bar></app-filter-bar>
+<section class="card">
+  @if (hayFiltros()) {
+    <p class="note" style="margin:0 0 14px">Con filtros, la meta y su avance se comparan con la meta total del asesor, que no se divide por campaña ni modalidad.</p>
+  }
+  @if (cargando()) {
+    <div class="empty"><div class="spin" role="status"></div>Cargando reporte…</div>
+  } @else if (r(); as r) {
+    <app-data-table [columnas]="columnas" [derecha]="derecha">
+      @for (f of r.filas; track f.asesorId) {
+        <tr>
+          <ng-container *ngTemplateOutlet="celdas; context: { $implicit: f }" />
+          <td class="r"><a class="btn sm" [routerLink]="['/reportes/asesor', f.asesorId]">Ver detalle</a></td>
+        </tr>
+      } @empty {
+        <tr><td colspan="9" class="empty">No hay asesores activos.</td></tr>
+      }
+      <tfoot>
+        <tr>
+          <ng-container *ngTemplateOutlet="celdas; context: { $implicit: r.total }" />
+          <td></td>
+        </tr>
+      </tfoot>
+    </app-data-table>
+  } @else {
+    <p class="empty">{{ error() }}</p>
+  }
+</section>
 
-  <!-- Selector extra de agrupación visto en el diseño original -->
-  <div class="d-flex align-items-center gap-2 mt-2">
-    <span class="small text-muted" style="width: 80px;">Agrupar por</span>
-    <select class="form-select form-select-sm bg-black text-light border-secondary w-auto">
-      <option value="asesor">Asesor</option>
-      <option value="equipo">Equipo</option>
-      <option value="campana">Campaña</option>
-    </select>
-  </div>
-</div>
-
-<!-- Sección de Resultados por asesor con el componente DataTable -->
-<div class="card bg-black border-secondary text-light p-4 mb-4">
-  <h5 class="fw-bold mb-1">Resultados por asesor</h5>
-  <small class="text-muted mb-4 d-block">Últimos 30 días · ingreso estimado en soles</small>
-
-  <app-data-table [columnas]="columnasReporte">
-    <tr *ngFor="let r of reportesAsesores">
-      <td class="fw-bold">{{ r.nombre }}</td>
-      <td>{{ r.gestiones }}</td>
-      <td>{{ r.ventas }}</td>
-      <td>{{ r.conversion }}</td>
-      <td class="fw-semibold">{{ r.ingreso }}</td>
-      <td>{{ r.promedio }}</td>
-      <td class="text-success fw-semibold">{{ r.meta }}</td>
-    </tr>
-  </app-data-table>
-</div>
+<ng-template #celdas let-f>
+  <td><b>{{ f.asesor }}</b></td>
+  <td class="r">{{ num(f.gestiones) }}</td>
+  <td class="r"><b>{{ num(f.cierres) }}</b></td>
+  <td class="r">{{ num(f.pendientes) }}</td>
+  <td class="r mono">{{ money(f.monto) }}</td>
+  <td class="r mono">{{ money(f.ticketPromedio) }}</td>
+  <td class="r">{{ num(f.meta) }}</td>
+  <td style="min-width:200px">
+    <div class="prog-row">
+      <div class="prog"><i [style.width.%]="f.avanceMeta * 100 > 100 ? 100 : f.avanceMeta * 100"></i></div>
+      <span class="mono">{{ pc(f.avanceMeta, 0) }}</span>
+    </div>
+    <app-pill [p]="metaPill(f.avanceMeta)" />
+  </td>
+</ng-template>

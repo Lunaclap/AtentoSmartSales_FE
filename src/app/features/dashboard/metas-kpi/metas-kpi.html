@@ -1,64 +1,45 @@
-<!-- Cabecera de la vista -->
-<div class="mb-4">
-  <h2 class="fw-bold mb-1">Metas y configuración de KPI</h2>
-  <p class="text-muted small mb-0">Define la meta mensual de ventas de cada asesor</p>
-</div>
+<app-page-head titulo="Metas" sub="Ventas cerradas que se espera de cada asesor en el mes" [fecha]="false">
+  <label class="sr" for="mp">Mes</label>
+  <select id="mp" class="sel" [ngModel]="periodo()" (ngModelChange)="periodo.set($event); cargar()">
+    @for (p of meses; track p.valor) { <option [value]="p.valor">{{ p.texto }}</option> }
+  </select>
+</app-page-head>
 
-<div class="row g-4">
-  <!-- Columna izquierda: Tabla con DataTable -->
-  <div class="col-xl-8">
-    <div class="card bg-black border-secondary text-light p-4">
-      <h5 class="fw-bold mb-1">Meta mensual por asesor</h5>
-      <small class="text-muted mb-4 d-block">Ventas cerradas por mes. Los indicadores se recalculan al guardar.</small>
-
-      <app-data-table [columnas]="columnasMetas">
-        <tr *ngFor="let a of asesoresMetas">
-          <td class="fw-bold">{{ a.nombre }}</td>
-          <td class="text-muted">{{ a.equipo }}</td>
-          <td><span class="text-muted small">● {{ a.campana }}</span></td>
-          <td style="width: 120px;">
-            <input 
-              type="number" 
-              class="form-control form-control-sm bg-dark text-light border-secondary text-center fw-semibold" 
-              [(ngModel)]="a.metaMensual" />
+<section class="card">
+  @if (cargando()) {
+    <div class="empty"><div class="spin" role="status"></div>Cargando metas…</div>
+  } @else if (error()) {
+    <p class="empty">{{ error() }}</p>
+  } @else {
+    <app-data-table [columnas]="columnas" [derecha]="['Cierres del mes', 'Mes anterior']">
+      @for (f of filas(); track f.asesorId) {
+        <tr>
+          <td><b>{{ f.asesor }}</b></td>
+          <td>
+            <label class="sr" [for]="'m' + f.asesorId">Meta de {{ f.asesor }}</label>
+            <input [id]="'m' + f.asesorId" class="inp" type="number" min="1" max="500" step="1" style="width:110px"
+                   [ngModel]="valores()[f.asesorId]" (ngModelChange)="cambiar(f.asesorId, $event)"
+                   [attr.aria-invalid]="invalidos().has(f.asesorId) ? true : null" />
+          </td>
+          <td class="r"><b>{{ num(f.cierres) }}</b></td>
+          <td class="r">{{ num(f.cierresMesAnterior) }}</td>
+          <td style="min-width:200px">
+            <div class="prog-row">
+              <div class="prog"><i [style.width.%]="avance(f) * 100 > 100 ? 100 : avance(f) * 100"></i></div>
+              <span class="mono">{{ pc(avance(f), 0) }}</span>
+            </div>
           </td>
         </tr>
-      </app-data-table>
+      } @empty {
+        <tr><td colspan="5" class="empty">No hay asesores activos.</td></tr>
+      }
+    </app-data-table>
+
+    <div class="row-actions" style="margin-top:16px;justify-content:space-between">
+      <span class="hint">Meta del equipo: <b>{{ num(total()) }}</b> ventas cerradas</span>
+      <button type="button" class="btn pri" [disabled]="guardando() || !cambios()" (click)="guardar()">
+        {{ guardando() ? 'Guardando…' : 'Guardar metas' }}
+      </button>
     </div>
-  </div>
-
-  <!-- Columna derecha: Definición de KPI -->
-  <div class="col-xl-4">
-    <div class="card bg-black border-secondary text-light p-4 h-100">
-      <h5 class="fw-bold mb-1">Definición de KPI</h5>
-      <small class="text-muted mb-4 d-block">Así se calcula cada indicador</small>
-
-      <div class="d-flex flex-column gap-3">
-        <div>
-          <h6 class="fw-bold mb-1 fs-6">Tasa de conversión</h6>
-          <p class="text-muted small mb-0">Ventas ÷ gestiones realizadas</p>
-        </div>
-
-        <div>
-          <h6 class="fw-bold mb-1 fs-6">Venta promedio</h6>
-          <p class="text-muted small mb-0">Ingreso estimado ÷ ventas cerradas</p>
-        </div>
-
-        <div>
-          <h6 class="fw-bold mb-1 fs-6">Meta cumplida</h6>
-          <p class="text-muted small mb-0">Ventas ÷ (meta mensual × días laborables del periodo ÷ 27)</p>
-        </div>
-
-        <div>
-          <h6 class="fw-bold mb-1 fs-6">Contacto efectivo</h6>
-          <p class="text-muted small mb-0">Gestión cuyo resultado no es «No contesta»</p>
-        </div>
-
-        <div>
-          <h6 class="fw-bold mb-1 fs-6">Comisión estimada</h6>
-          <p class="text-muted small mb-0">Regla de ejemplo: S/ 15 por venta</p>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
+  }
+</section>

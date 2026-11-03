@@ -1,50 +1,24 @@
-<div class="col-auto bg-black border-end border-secondary d-flex flex-column justify-content-between p-3" style="width: 260px; min-height: 100vh;">
-  <div>
-    <!-- Logo / Marca -->
-    <div class="d-flex align-items-center gap-2 mb-4 px-2">
-      <div class="bg-primary p-2 rounded text-white fs-5">📊</div>
-      <span class="fw-bold">Panel Comercial</span>
-    </div>
-
-    <!-- Menú de Navegación Único -->
-    <ul class="nav flex-column gap-1">
-        <li class="nav-item">
-          <a routerLink="/dashboard" routerLinkActive="active" class="nav-link text-light">Dashboard comercial</a>
-        </li>
-        <li class="nav-item">
-          <a routerLink="/equipos-asesores" routerLinkActive="active" class="nav-link text-light">Equipos y asesores</a>
-        </li>
-        <li class="nav-item">
-          <a routerLink="/reportes" routerLinkActive="active" class="nav-link text-light">Reportes</a>
-        </li>
-        <li class="nav-item">
-          <a routerLink="/clientes" routerLinkActive="active" class="nav-link text-light">Clientes</a>
-        </li>
-        <li class="nav-item">
-          <a routerLink="/ventas" routerLinkActive="active" class="nav-link text-light">Ventas</a> <!-- <--- NUEVO -->
-        </li>
-        <li class="nav-item">
-          <a routerLink="/metas-kpi" routerLinkActive="active" class="nav-link text-light">Metas y KPI</a>
-        </li>
-        <li class="nav-item">
-          <a routerLink="/usuarios" routerLinkActive="active" class="nav-link text-light">
-            Gestión de Usuarios
-          </a>
-        </li>
-    </ul>
+<aside class="side">
+  <div class="brand">
+    <span class="brand-mark"><app-icon name="brand" /></span>
+    Panel Comercial
   </div>
 
-  <!-- Perfil de Usuario e Inicio/Cierre de Sesión -->
-  <div class="border-top border-secondary pt-3 d-flex align-items-center justify-content-between">
-    <div class="d-flex align-items-center gap-2">
-      <div class="bg-secondary rounded px-2 py-1 fw-bold small text-dark">RM</div>
-      <div>
-        <div class="fw-bold small">Rosa Medina</div>
-        <div class="text-muted" style="font-size: 0.75rem;">Gerente comercial</div>
-      </div>
+  <nav class="nav" aria-label="Principal">
+    @for (item of menu; track item.ruta) {
+      <a [routerLink]="item.ruta" routerLinkActive="active" ariaCurrentWhenActive="page">
+        <app-icon [name]="item.icono" />{{ item.texto }}
+      </a>
+    }
+  </nav>
+
+  <div class="side-foot">
+    <div class="who">
+      <span class="av">{{ iniciales }}</span>
+      <span><b>{{ usuario }}</b>{{ rolTexto }}</span>
     </div>
-    <button class="btn btn-sm text-muted p-0" title="Salir" (click)="onLogout()">
-      <i class="bi bi-box-arrow-left fs-5"></i>
+    <button type="button" class="btn sm side-out" (click)="onLogout()">
+      <app-icon name="out" />Salir
     </button>
   </div>
-</div>
+</aside>

@@ -1,61 +1,69 @@
-import { Component } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
+import { PageHeadComponent } from '../../../shared/components/page-head/page-head';
 import { KpiCardComponent } from '../../../shared/components/kpi-card/kpi-card';
-import { FilterBarComponent } from '../../../shared/components/filter-bar/filter-bar';
 import { ChartPanelComponent } from '../../../shared/components/chart-panel/chart-panel';
+import { LineChartComponent, SparkComponent } from '../../../shared/components/line-chart/line-chart';
+import { PillComponent } from '../../../shared/components/pill/pill';
+import { TooltipDirective } from '../../../shared/components/tooltip/tooltip';
+import { ComercialService, mensajeError } from '../../../core/services/comercial.service';
+import { ResumenGerente } from '../../../core/models/comercial.model';
+import { colorCampana, dec, metaPill, money, num, pc, periodoActual, periodos } from '../../../shared/utils/formato';
+import { serieDiaria } from '../reportes/detalle-asesor';
 
+const COLOR_ESTADO: Record<string, string> = {
+  'Aprobado': 'var(--ok)', 'Contactado': 'var(--c1)', 'No contactado': 'var(--muted)', 'Rechazado': 'var(--c2)', 'Black List': 'var(--crit)'
+};
+
+/** Dashboard del gerente: resumen del mes con datos reales del backend. */
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [
-    CommonModule, 
-    FormsModule, 
-    KpiCardComponent, 
-    FilterBarComponent, 
-    ChartPanelComponent
-  ],
+  imports: [FormsModule, RouterLink, PageHeadComponent, KpiCardComponent, ChartPanelComponent, LineChartComponent, SparkComponent, PillComponent, TooltipDirective],
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.css'
 })
-export class DashboardComponent {
-  kpis = {
-    ventas: 374,
-    ventasVariacion: '+17,2 %',
-    conversion: '9,7 %',
-    conversionVariacion: '+11,9 %',
-    promedio: 'S/ 1,270',
-    promedioVariacion: '-0,8 %',
-    metaCumplida: '112 %',
-    metaTexto: 'En meta',
-    metaValor: 'Meta: 333 ventas'
-  };
+export class DashboardComponent implements OnInit {
+  private api = inject(ComercialService);
+  num = num; pc = pc; money = money; dec = dec; metaPill = metaPill; color = colorCampana;
 
-  asesores = [
-    { nombre: 'Diego Salazar', ventas: 53, ancho: '100%' },
-    { nombre: 'Fiorella Vega', ventas: 40, ancho: '75%' },
-    { nombre: 'Luis Paredes', ventas: 36, ancho: '68%' },
-    { nombre: 'Lucía Quispe', ventas: 35, ancho: '66%' },
-    { nombre: 'Camila Flores', ventas: 35, ancho: '66%' },
-    { nombre: 'Andrea Rojas', ventas: 33, ancho: '62%' },
-    { nombre: 'Mateo Ramos', ventas: 26, ancho: '48%' },
-    { nombre: 'Renzo Cárdenas', ventas: 25, ancho: '45%' },
-    { nombre: 'Kevin Torres', ventas: 24, ancho: '43%' },
-    { nombre: 'Jorge Mamani', ventas: 23, ancho: '40%' },
-    { nombre: 'Marisol Huamán', ventas: 22, ancho: '38%' },
-    { nombre: 'Valeria Chávez', ventas: 22, ancho: '38%' }
-  ];
+  meses = periodos();
+  periodo = signal(periodoActual());
+  d = signal<ResumenGerente | null>(null);
+  error = signal('');
 
-  clientesPendientes = [
-    { nombre: 'Sofía Torres Silva', codigo: '53348699', asesor: 'Camila Flores', campana: 'Telefonía móvil', ultimoContacto: 'Hace 12 d', seguimiento: 'Vencido hace 11 d', estado: 'Contactado' },
-    { nombre: 'Patricia Ponce Ramírez', codigo: '56770876', asesor: 'Marisol Huamán', campana: 'Seguros de salud', ultimoContacto: 'Hace 13 d', seguimiento: 'Vencido hace 10 d', estado: 'Interesado' },
-    { nombre: 'Víctor Flores Castillo', codigo: '27470059', asesor: 'Jorge Mamani', campana: 'Seguros de salud', ultimoContacto: 'Hace 11 d', seguimiento: 'Vencido hace 10 d', estado: 'Contactado' },
-    { nombre: 'Pedro Castillo Vera', codigo: '66379766', asesor: 'Fiorella Vega', campana: 'Telefonía móvil', ultimoContacto: 'Hace 11 d', seguimiento: 'Vencido hace 10 d', estado: 'Contactado' },
-    { nombre: 'María Salas Ramírez', codigo: '44827356', asesor: 'Mateo Ramos', campana: 'Seguros de salud', ultimoContacto: 'Hace 12 d', seguimiento: 'Vencido hace 10 d', estado: 'Interesado' },
-    { nombre: 'Constructora Surco S.A.C.', codigo: '20288588494', asesor: 'Jorge Mamani', campana: 'Seguros de salud', ultimoContacto: 'Hace 13 d', seguimiento: 'Vencido hace 10 d', estado: 'Contactado' }
-  ];
+  serie = computed(() => { const d = this.d(); return d ? serieDiaria(d.dias, d.meta) : []; });
+  spark = computed(() => this.d()?.dias.map(x => x.cierres) ?? []);
+  sparkGestiones = computed(() => this.d()?.dias.map(x => x.gestiones) ?? []);
 
-  onFiltroCambio(filtro: any) {
-    console.log('Filtros aplicados:', filtro);
+  estados = computed(() => {
+    const e = this.d()?.clientesPorEstado ?? {};
+    const total = Object.values(e).reduce((t, v) => t + v, 0) || 1;
+    const max = Math.max(1, ...Object.values(e));
+    return Object.entries(e).map(([n, v]) => ({ n, v, w: v / max * 100, c: COLOR_ESTADO[n] ?? 'var(--c1)', tip: `${n}: ${v} clientes (${pc(v / total, 0)})` }));
+  });
+
+  campanas = computed(() => {
+    const l = this.d()?.campanas ?? [];
+    const max = Math.max(1, ...l.map(c => c.cierres));
+    return l.map(c => ({ ...c, w: c.cierres / max * 100, tip: `${c.campana}: ${c.cierres} cierres · conversión ${pc(c.conversion)}` }));
+  });
+
+  ngOnInit() { this.cargar(); }
+
+  cargar() {
+    this.d.set(null);
+    this.error.set('');
+    this.api.resumen(this.periodo()).subscribe({
+      next: d => this.d.set(d),
+      error: e => this.error.set(mensajeError(e, 'No se pudo cargar el resumen.'))
+    });
+  }
+
+  variacion(a: number, b: number) {
+    if (!b) return '';
+    const v = (a - b) / b;
+    return (v >= 0 ? '+' : '−') + pc(Math.abs(v), 0);
   }
 }

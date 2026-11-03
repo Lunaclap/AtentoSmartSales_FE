@@ -1,24 +1,34 @@
 import { Component, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { IconComponent } from '../icon/icon';
+import { TooltipDirective } from '../tooltip/tooltip';
 
 @Component({
   selector: 'app-kpi-card',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, IconComponent, TooltipDirective],
   template: `
-    <div class="card bg-black border-secondary text-light p-3 h-100">
-      <span class="text-muted small">{{ titulo }}</span>
-      <h2 class="fw-bold my-1 display-6">{{ valor }}</h2>
-      <span [ngClass]="esPositivo ? 'text-success' : 'text-danger'" class="small">
-        {{ esPositivo ? '▲' : '▼' }} {{ variacion }} <span class="text-muted">frente al periodo anterior</span>
-      </span>
+    <article class="kpi">
+      @if (tip) { <div class="kpi-l" [appTip]="tip">{{ titulo }}</div> } @else { <div class="kpi-l">{{ titulo }}</div> }
+      <div class="kpi-v">{{ valor }}@if (unidad) {<small>{{ unidad }}</small>}</div>
+      @if (variacion) {
+        <span class="kpi-d">
+          <span [ngClass]="esPositivo ? 'up' : 'down'"><app-icon [name]="baja ? 'down' : 'up'" /> {{ variacion }}</span>
+          frente al periodo anterior
+        </span>
+      }
       <ng-content></ng-content>
-    </div>
+    </article>
   `
 })
 export class KpiCardComponent {
   @Input() titulo: string = '';
   @Input() valor: string | number = '';
+  @Input() unidad: string = '';
   @Input() variacion: string = '';
+  /** Colorea la variación en verde (buena) o rojo (mala). */
   @Input() esPositivo: boolean = true;
+  @Input() tip: string = '';
+
+  get baja() { return /^[-−]/.test(this.variacion); }
 }

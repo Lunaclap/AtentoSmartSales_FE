@@ -1,51 +1,65 @@
-<!-- Cabecera de la vista -->
-<div class="d-flex justify-content-between align-items-center mb-4">
-  <div>
-    <h2 class="fw-bold mb-1">Clientes</h2>
-    <p class="text-muted small mb-0">Cartera completa del área · 96 clientes</p>
-  </div>
-  <button class="btn btn-sm btn-primary fw-semibold px-3" (click)="toggleFormulario()">
-    {{ mostrarFormulario ? 'Ver cartera' : 'Nuevo cliente' }}
-  </button>
-</div>
+<app-page-head titulo="Clientes" [sub]="(gerente ? 'Cartera del área' : 'Tu cartera') + ' · ' + clientes().length + ' clientes'" [fecha]="false">
+  <button type="button" class="btn pri" (click)="nuevaVenta(null)">Nueva venta</button>
+</app-page-head>
 
-<!-- Si se hace clic en 'Nuevo cliente', se muestra el componente compartido ClientForm -->
-<div *ngIf="mostrarFormulario" class="mb-4">
-  <app-client-form></app-client-form>
-</div>
-
-<!-- Vista normal de cartera utilizando el componente compartido DataTable -->
-<div *ngIf="!mostrarFormulario">
-  <!-- Barra de búsqueda y filtro por estado -->
-  <div class="d-flex flex-wrap gap-3 align-items-center mb-4">
-    <input 
-      type="text" 
-      class="form-control form-control-sm bg-black text-light border-secondary w-auto" 
-      style="min-width: 280px;" 
-      placeholder="Buscar por nombre o documento" />
-    
-    <select class="form-select form-select-sm bg-black text-light border-secondary w-auto">
-      <option value="todos">Todos los estados</option>
-      <option value="contactado">Contactado</option>
-      <option value="cerrado">Cerrado</option>
+<div class="filters">
+  <label class="sr" for="q">Buscar cliente</label>
+  <input id="q" class="inp" type="search" placeholder="Buscar por nombre o documento" autocomplete="off" style="min-width:260px"
+         [ngModel]="busqueda()" (ngModelChange)="busqueda.set($event); limite.set(25)" />
+  <label class="sr" for="est">Estado de gestión</label>
+  <select id="est" class="sel" [ngModel]="estado()" (ngModelChange)="estado.set($event); limite.set(25)">
+    <option value="todos">Todos los estados</option>
+    @for (e of catalogo()?.estadosGestion ?? []; track e) { <option [value]="e">{{ e }}</option> }
+  </select>
+  @if (gerente) {
+    <label class="sr" for="as">Asesor</label>
+    <select id="as" class="sel" [ngModel]="asesor()" (ngModelChange)="asesor.set($event); limite.set(25)">
+      <option value="todos">Todos los asesores</option>
+      @for (a of catalogo()?.asesores ?? []; track a.id) { <option [ngValue]="a.id">{{ a.nombre }}</option> }
     </select>
-  </div>
-
-  <!-- Componente compartido: DataTable -->
-  <app-data-table [columnas]="columnasClientes">
-    <tr *ngFor="let c of clientesCartera">
-      <td>
-        <div class="fw-bold">{{ c.nombre }}</div>
-        <small class="text-muted">{{ c.tipo }} · {{ c.doc }}</small>
-      </td>
-      <td>{{ c.asesor }}</td>
-      <td><span class="text-muted small">● {{ c.campana }}</span></td>
-      <td><span [ngClass]="c.claseEstado">● {{ c.estado }}</span></td>
-      <td class="text-muted">{{ c.ultimoContacto }}</td>
-      <td>{{ c.proximoSeguimiento }}</td>
-      <td>
-        <button class="btn btn-sm btn-outline-secondary text-light py-1 px-2" style="font-size: 0.8rem;">Ver ficha</button>
-      </td>
-    </tr>
-  </app-data-table>
+  }
 </div>
+
+<section class="card t-compacta">
+  @if (cargando()) {
+    <div class="empty"><div class="spin" role="status"></div>Cargando clientes…</div>
+  } @else {
+    <app-data-table [columnas]="columnas" [derecha]="['Acción']">
+      @for (c of visibles(); track c.id) {
+        <tr>
+          <td class="mono">{{ c.numeroDocumento }}</td>
+          <td class="nm"><b>{{ c.nombreCompleto }}</b>@if (gerente && c.asesor) {<span>{{ c.asesor }}</span>}</td>
+          <td><app-camp-chip [nombre]="c.campana" /></td>
+          <td>{{ guion(c.vencimientoCampana) }}</td>
+          <td><app-pill [p]="gestionPill(c.estadoGestion)" /></td>
+          <td>{{ guion(c.tipificacion) }}</td>
+          <td>{{ relativa(c.ultimoContacto) }}</td>
+          <td>
+            @if (c.seguimiento) {
+              <span class="due" [class.late]="diasDesdeHoy(c.seguimiento) < 0">{{ fechaCorta(c.seguimiento) }} · {{ relativa(c.seguimiento) }}</span>
+            } @else { - }
+          </td>
+          <td class="r"><div class="acciones">
+            <button type="button" class="btn sm" (click)="fichaId.set(c.id)">Ver ficha</button>
+            <button type="button" class="btn sm pri" (click)="nuevaVenta(c)">Nueva venta</button></div>
+          </td>
+        </tr>
+      } @empty {
+        <tr><td colspan="9" class="empty">{{ error() || 'Ningún cliente coincide con la búsqueda.' }}</td></tr>
+      }
+    </app-data-table>
+    @if (lista().length > limite()) {
+      <div style="text-align:center;margin-top:12px">
+        <button type="button" class="btn" (click)="limite.set(limite() + 25)">Mostrar más ({{ lista().length - limite() }} restantes)</button>
+      </div>
+    }
+  }
+</section>
+
+@if (fichaId(); as id) {
+  <app-client-drawer [clienteId]="id" [version]="versionFicha()" (cerrar)="fichaId.set(null)" (nuevaVenta)="nuevaVenta($event)" />
+}
+
+@if (formulario() !== undefined) {
+  <app-gestion-form [cliente]="formulario() ?? null" (guardado)="registrada($event)" (cancelar)="formulario.set(undefined)" />
+}

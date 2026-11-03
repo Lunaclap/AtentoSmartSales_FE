@@ -1,64 +1,86 @@
-<!-- Cabecera del módulo -->
-<div class="d-flex justify-content-between align-items-center mb-4">
-  <div>
-    <h2 class="fw-bold mb-1">Gestión de Ventas</h2>
-    <p class="text-muted small mb-0">Control y registro de transacciones cerradas por el call center</p>
+<app-page-head titulo="Ventas" [sub]="gerente ? 'Ventas del área · las devueltas a gestión se ven en Clientes' : 'Tus ventas y el avance de tu meta del mes'">
+  <button type="button" class="btn pri" (click)="formulario.set(true)">Nueva venta</button>
+</app-page-head>
+
+@if (meta(); as m) {
+  <section class="kpis" aria-label="Avance de la meta del mes">
+    <app-kpi-card [titulo]="gerente ? 'Meta del equipo (mes)' : 'Tu meta del mes'" [valor]="num(m.meta)" unidad="ventas"
+                  tip="Ventas cerradas que se esperan en el mes">
+      <span class="kpi-d"><app-pill [p]="metaPill(m.avance)" /></span>
+    </app-kpi-card>
+    <app-kpi-card titulo="Cierres del mes" [valor]="num(m.cierres)" tip="Ventas en estado Cerrado registradas este mes">
+      <div class="prog" role="img" [attr.aria-label]="'Avance de meta ' + pc(m.avance, 0)">
+        <i [style.width.%]="m.avance * 100 > 100 ? 100 : m.avance * 100"></i>
+      </div>
+      <span class="kpi-d">{{ pc(m.avance, 0) }} de la meta · faltan {{ num(m.meta > m.cierres ? m.meta - m.cierres : 0) }}</span>
+    </app-kpi-card>
+    <app-kpi-card titulo="Ventas pendientes" [valor]="num(totales().pendientes)" tip="Si pasan 3 días sin cerrarse, vuelven a gestión">
+      <span class="kpi-d">Se devuelven a gestión a los 3 días</span>
+    </app-kpi-card>
+    <app-kpi-card titulo="Monto cerrado" [valor]="money(totales().monto)" tip="Suma del monto final de las ventas cerradas del listado">
+      <span class="kpi-d">Todas las ventas del listado</span>
+    </app-kpi-card>
+  </section>
+}
+
+<div class="filters">
+  <label class="sr" for="vq">Buscar venta</label>
+  <input id="vq" class="inp" type="search" placeholder="Buscar por cliente, documento o ID" autocomplete="off" style="min-width:260px"
+         [ngModel]="busqueda()" (ngModelChange)="busqueda.set($event); limite.set(25)" />
+  <div class="seg" role="group" aria-label="Estado de venta">
+    <button type="button" [attr.aria-pressed]="estado() === 'todos'" (click)="estado.set('todos')">Todas</button>
+    <button type="button" [attr.aria-pressed]="estado() === 'Pendiente'" (click)="estado.set('Pendiente')">Pendientes</button>
+    <button type="button" [attr.aria-pressed]="estado() === 'Cerrado'" (click)="estado.set('Cerrado')">Cerradas</button>
   </div>
-  <button class="btn btn-sm btn-primary fw-semibold px-3" (click)="toggleModalVenta()">
-    {{ mostrarModalVenta ? 'Ver listado' : '+ Nueva venta' }}
-  </button>
+  <label class="sr" for="vc">Campaña</label>
+  <select id="vc" class="sel" [ngModel]="campana()" (ngModelChange)="campana.set($event); limite.set(25)">
+    <option value="todas">Todas las campañas</option>
+    @for (c of catalogo()?.campanas ?? []; track c.id) { <option [value]="c.nombre">{{ c.nombre }}</option> }
+  </select>
 </div>
 
-<!-- Si se activa, muestra el componente compartido SaleForm -->
-<div *ngIf="mostrarModalVenta" class="mb-4">
-  <app-sale-form (onSubmit)="toggleModalVenta()" (onCancel)="toggleModalVenta()"></app-sale-form>
-</div>
-
-<!-- Vista principal del módulo de ventas -->
-<div *ngIf="!mostrarModalVenta">
-  <!-- 1. Componente compartido: FilterBar -->
-  <div class="mb-4">
-    <app-filter-bar></app-filter-bar>
-  </div>
-
-  <!-- 2. Componentes compartidos: KpiCards de resumen rápido -->
-  <div class="row g-3 mb-4">
-    <div class="col-xl-4 col-md-4">
-      <app-kpi-card titulo="Ventas del Periodo" valor="374" variacion="+17,2%" [esPositivo]="true">
-        <small class="text-muted d-block mt-2">Registradas en los últimos 30 días</small>
-      </app-kpi-card>
-    </div>
-    <div class="col-xl-4 col-md-4">
-      <app-kpi-card titulo="Ingreso Acumulado" valor="S/ 474,980" variacion="+12,4%" [esPositivo]="true">
-        <small class="text-muted d-block mt-2">Suma total estimada</small>
-      </app-kpi-card>
-    </div>
-    <div class="col-xl-4 col-md-4">
-      <app-kpi-card titulo="Ticket Promedio" valor="S/ 1,270" variacion="-0,8%" [esPositivo]="false">
-        <small class="text-muted d-block mt-2">Por transacción cerrada</small>
-      </app-kpi-card>
-    </div>
-  </div>
-
-  <!-- 3. Componente compartido: DataTable para el historial de transacciones -->
-  <div class="card bg-black border-secondary text-light p-4">
-    <h5 class="fw-bold mb-1">Historial de transacciones</h5>
-    <small class="text-muted mb-4 d-block">Detalle individual de cierres de campaña</small>
-
-    <app-data-table [columnas]="columnasVentas">
-      <tr *ngFor="let v of listaVentas">
-        <td class="fw-bold text-primary">{{ v.id }}</td>
-        <td>{{ v.cliente }}</td>
-        <td>{{ v.asesor }}</td>
-        <td><span class="text-muted small">● {{ v.campana }}</span></td>
-        <td class="fw-semibold">{{ v.monto }}</td>
-        <td class="text-muted small">{{ v.fecha }}</td>
-        <td>
-          <span class="badge" [ngClass]="v.estado === 'Aprobado' ? 'bg-success text-white' : 'bg-warning text-dark'">
-            {{ v.estado }}
-          </span>
-        </td>
-      </tr>
+<section class="card">
+  @if (cargando()) {
+    <div class="empty"><div class="spin" role="status"></div>Cargando ventas…</div>
+  } @else {
+    <app-data-table [columnas]="columnas()" [derecha]="['Monto', '']">
+      @for (v of visibles(); track v.id) {
+        <tr>
+          <td class="mono">#{{ v.id }}</td>
+          <td class="nm"><button type="button" class="link" (click)="fichaId.set(v.clienteId)"><b>{{ v.cliente }}</b></button><span>{{ v.documento }}</span></td>
+          <td><app-camp-chip [nombre]="v.campana" /></td>
+          <td>{{ v.modalidad }}</td>
+          <td class="r mono">{{ money(v.monto) }}</td>
+          <td>{{ fechaHora(v.fecha) }}</td>
+          <td>
+            <app-pill [p]="ventaPill(v.estado)" />
+            @if (v.estado === 'Pendiente') { <span class="hint"> · {{ relativa(v.fecha) }}</span> }
+          </td>
+          @if (conAsesor()) { <td>{{ v.asesor }}</td> }
+          @if (gerente) {
+            <td class="r">
+              @if (v.estado === 'Pendiente') {
+                <button type="button" class="btn sm" [disabled]="cerrando() === v.id" (click)="cerrar(v)">Marcar cerrada</button>
+              }
+            </td>
+          }
+        </tr>
+      } @empty {
+        <tr><td [attr.colspan]="columnas().length" class="empty">{{ error() || 'No hay ventas que coincidan con los filtros.' }}</td></tr>
+      }
     </app-data-table>
-  </div>
-</div>
+    @if (lista().length > limite()) {
+      <div style="text-align:center;margin-top:12px">
+        <button type="button" class="btn" (click)="limite.set(limite() + 25)">Mostrar más ({{ lista().length - limite() }} restantes)</button>
+      </div>
+    }
+  }
+</section>
+
+@if (fichaId(); as id) {
+  <app-client-drawer [clienteId]="id" (cerrar)="fichaId.set(null)" (nuevaVenta)="fichaId.set(null); nuevaDesdeFicha.set($event); formulario.set(true)" />
+}
+
+@if (formulario()) {
+  <app-gestion-form [cliente]="nuevaDesdeFicha()" (guardado)="registrada($event)" (cancelar)="formulario.set(false); nuevaDesdeFicha.set(null)" />
+}

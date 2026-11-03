@@ -1,31 +1,70 @@
-import { Component } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { FilterBarComponent } from '../../../shared/components/filter-bar/filter-bar';
+import { Component, OnInit, inject, signal } from '@angular/core';
+import { FormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
+import { NgTemplateOutlet } from '@angular/common';
+import { PageHeadComponent } from '../../../shared/components/page-head/page-head';
 import { DataTableComponent } from '../../../shared/components/data-table/data-table';
+import { PillComponent } from '../../../shared/components/pill/pill';
+import { ToastService } from '../../../shared/components/toast/toast';
+import { ComercialService, mensajeError } from '../../../core/services/comercial.service';
+import { FilaAsesor, ReporteAsesores } from '../../../core/models/comercial.model';
+import { metaPill, money, num, pc, periodoActual, periodos } from '../../../shared/utils/formato';
 
+/** Reporte del gerente: tabla resumen por asesor con filtros por campaña y modalidad (REQ-26). */
 @Component({
   selector: 'app-reportes',
   standalone: true,
-  imports: [CommonModule, FilterBarComponent, DataTableComponent],
+  imports: [FormsModule, RouterLink, NgTemplateOutlet, PageHeadComponent, DataTableComponent, PillComponent],
   templateUrl: './reportes.html',
   styleUrl: './reportes.css'
 })
-export class ReportesComponent {
-  columnasReporte: string[] = [
-    'ASESOR',
-    'GESTIONES',
-    'VENTAS',
-    'CONVERSIÓN',
-    'INGRESO EST.',
-    'VENTA PROM.',
-    'META'
-  ];
+export class ReportesComponent implements OnInit {
+  private api = inject(ComercialService);
+  private toast = inject(ToastService);
+  num = num; money = money; pc = pc; metaPill = metaPill;
 
-  reportesAsesores = [
-    { nombre: 'Lucía Quispe', gestiones: 337, ventas: 35, conversion: '10,4 %', ingreso: 'S/ 57,080', promedio: 'S/ 1,631', meta: '135 %' },
-    { nombre: 'Diego Salazar', gestiones: 335, ventas: 53, conversion: '15,8 %', ingreso: 'S/ 66,750', promedio: 'S/ 1,259', meta: '138 %' },
-    { nombre: 'Marisol Huamán', gestiones: 319, ventas: 22, conversion: '6,9 %', ingreso: 'S/ 16,760', promedio: 'S/ 762', meta: '99 %' },
-    { nombre: 'Renzo Cárdenas', gestiones: 306, ventas: 25, conversion: '8,2 %', ingreso: 'S/ 41,220', promedio: 'S/ 1,649', meta: '100 %' },
-    { nombre: 'Camila Flores', gestiones: 326, ventas: 35, conversion: '10,7 %', ingreso: 'S/ 44,280', promedio: 'S/ 1,265', meta: '107 %' }
-  ];
+  catalogo = this.api.catalogo;
+  meses = periodos();
+  periodo = signal(periodoActual());
+  campanaId = signal<number | null>(null);
+  modalidadId = signal<number | null>(null);
+
+  r = signal<ReporteAsesores | null>(null);
+  cargando = signal(true);
+  error = signal('');
+
+  columnas = ['Asesor', 'Gestiones', 'Cierres', 'Pendientes', 'Monto cerrado', 'Venta promedio', 'Meta', 'Avance de meta', ''];
+  derecha = ['Gestiones', 'Cierres', 'Pendientes', 'Monto cerrado', 'Venta promedio', 'Meta'];
+
+  ngOnInit() {
+    this.api.cargarCatalogos().subscribe({ error: () => {} });
+    this.cargar();
+  }
+
+  cargar() {
+    this.cargando.set(true);
+    this.error.set('');
+    this.api.reporteAsesores(this.periodo(), this.campanaId(), this.modalidadId()).subscribe({
+      next: r => { this.r.set(r); this.cargando.set(false); },
+      error: e => { this.error.set(mensajeError(e, 'No se pudo cargar el reporte.')); this.cargando.set(false); }
+    });
+  }
+
+  hayFiltros() { return this.campanaId() !== null || this.modalidadId() !== null; }
+
+  limpiar() {
+    this.campanaId.set(null);
+    this.modalidadId.set(null);
+    this.cargar();
+  }
+
+  copiarCsv() {
+    const r = this.r();
+    if (!r) return;
+    const fila = (f: FilaAsesor) => [f.asesor, f.gestiones, f.cierres, f.pendientes, f.monto.toFixed(2), f.ticketPromedio.toFixed(2), f.meta, (f.avanceMeta * 100).toFixed(1)].join(';');
+    const csv = ['Asesor;Gestiones;Cierres;Pendientes;Monto cerrado;Venta promedio;Meta;Avance %', ...r.filas.map(fila), fila(r.total)].join('\n');
+    navigator.clipboard.writeText(csv).then(
+      () => this.toast.show('Tabla copiada como CSV.'),
+      () => this.toast.show('No se pudo copiar al portapapeles.', true));
+  }
 }
