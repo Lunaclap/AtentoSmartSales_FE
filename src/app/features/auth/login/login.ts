@@ -1,4 +1,4 @@
-import { Component, signal } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -6,6 +6,7 @@ import { AuthService } from '../../../core/services/auth.service';
 import { LoginRequest } from '../../../core/models/auth.model';
 import { IconComponent } from '../../../shared/components/icon/icon';
 import { inicioPorRol } from '../../../core/guards/rol.guard';
+import { SesionService } from '../../../core/services/sesion.service';
 
 @Component({
   selector: 'app-login',
@@ -32,6 +33,8 @@ export class LoginComponent {
   errorPassword = signal('');
   cargando = signal(false);
 
+  private sesion = inject(SesionService);
+
   constructor(private authService: AuthService, private router: Router) {}
 
   // Método para alternar el perfil visualmente
@@ -50,6 +53,7 @@ export class LoginComponent {
     this.authService.login(this.credentials).subscribe({
       next: () => {
         this.cargando.set(false);
+        this.sesion.reiniciar(); // la inactividad se cuenta desde este login
         // Gerente y administrador van al dashboard; el asesor, a su reporte
         this.router.navigate(['/', inicioPorRol()]);
       },

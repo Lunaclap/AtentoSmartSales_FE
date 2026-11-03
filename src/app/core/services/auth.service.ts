@@ -26,6 +26,7 @@ export class AuthService {
     localStorage.removeItem('authToken');
     localStorage.removeItem('username');
     localStorage.removeItem('userRole');
+    localStorage.removeItem('ultimaActividad');
   }
 
   getToken(): string | null {
