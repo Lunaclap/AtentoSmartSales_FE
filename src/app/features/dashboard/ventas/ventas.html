@@ -25,7 +25,7 @@
 
 <div class="filters">
   <label class="sr" for="vq">Buscar venta</label>
-  <input id="vq" class="inp" type="search" placeholder="Buscar por cliente, documento o ID" autocomplete="off" style="min-width:260px"
+  <input id="vq" class="inp" type="search" placeholder="Buscar por cliente, documento, teléfono o ID" autocomplete="off" style="min-width:320px"
          [ngModel]="busqueda()" (ngModelChange)="busqueda.set($event); limite.set(25)" />
   <div class="seg" role="group" aria-label="Estado de venta">
     <button type="button" [attr.aria-pressed]="estado() === 'todos'" (click)="estado.set('todos')">Todas</button>
@@ -48,6 +48,7 @@
         <tr>
           <td class="mono">#{{ v.id }}</td>
           <td class="nm"><button type="button" class="link" (click)="fichaId.set(v.clienteId)"><b>{{ v.cliente }}</b></button><span>{{ v.documento }}</span></td>
+          <td class="mono">{{ guion(v.telefono) }}</td>
           <td><app-camp-chip [nombre]="v.campana" /></td>
           <td>{{ v.modalidad }}</td>
           <td class="r mono">{{ money(v.monto) }}</td>

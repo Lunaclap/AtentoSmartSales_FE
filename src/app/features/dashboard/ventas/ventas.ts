@@ -9,7 +9,7 @@ import { ClientDrawerComponent } from '../../../shared/components/client-drawer/
 import { ToastService } from '../../../shared/components/toast/toast';
 import { ComercialService, esGerente, mensajeError } from '../../../core/services/comercial.service';
 import { AvanceMeta, Cliente, GestionRegistrada, Venta } from '../../../core/models/comercial.model';
-import { fechaHora, metaPill, money, num, pc, relativa, sinTildes, ventaPill } from '../../../shared/utils/formato';
+import { fechaHora, guion, metaPill, money, num, pc, relativa, sinTildes, ventaPill } from '../../../shared/utils/formato';
 
 /**
  * Módulo Ventas (REQ-24): las ventas devueltas a gestión no aparecen (REQ-31).
@@ -26,7 +26,7 @@ import { fechaHora, metaPill, money, num, pc, relativa, sinTildes, ventaPill } f
 export class VentasComponent implements OnInit {
   private api = inject(ComercialService);
   private toast = inject(ToastService);
-  money = money; num = num; pc = pc; fechaHora = fechaHora; relativa = relativa; ventaPill = ventaPill; metaPill = metaPill;
+  money = money; num = num; pc = pc; guion = guion; fechaHora = fechaHora; relativa = relativa; ventaPill = ventaPill; metaPill = metaPill;
 
   gerente = esGerente();
   ventas = signal<Venta[]>([]);
@@ -48,7 +48,7 @@ export class VentasComponent implements OnInit {
   /** La columna Asesor se muestra solo si las ventas la traen. */
   conAsesor = computed(() => this.ventas().some(v => v.asesor));
   columnas = computed(() => [
-    'ID venta', 'Cliente', 'Campaña', 'Modalidad', 'Monto', 'Fecha', 'Estado de venta',
+    'ID venta', 'Cliente', 'Teléfono', 'Campaña', 'Modalidad', 'Monto', 'Fecha', 'Estado de venta',
     ...(this.conAsesor() ? ['Asesor'] : []), ...(this.gerente ? [''] : [])
   ]);
 
@@ -56,7 +56,7 @@ export class VentasComponent implements OnInit {
     const q = sinTildes(this.busqueda().trim()), e = this.estado(), c = this.campana();
     return this.ventas().filter(v =>
       (e === 'todos' || v.estado === e) && (c === 'todas' || v.campana === c) &&
-      (!q || sinTildes(v.cliente).includes(q) || v.documento.includes(q) || String(v.id) === q));
+      (!q || sinTildes(v.cliente).includes(q) || v.documento.includes(q) || v.telefono?.includes(q) || String(v.id) === q));
   });
   visibles = computed(() => this.lista().slice(0, this.limite()));
 
