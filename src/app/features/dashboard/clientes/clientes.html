@@ -1,6 +1,4 @@
-<app-page-head titulo="Clientes" [sub]="(gerente ? 'Cartera del área' : 'Tu cartera') + ' · ' + clientes().length + ' clientes'" [fecha]="false">
-  <button type="button" class="btn pri" (click)="nuevaVenta(null)">Nueva venta</button>
-</app-page-head>
+<app-page-head titulo="Clientes" [sub]="(gerente ? 'Cartera del área' : 'Tu cartera') + ' · ' + clientes().length + ' clientes'" [fecha]="false" />
 
 <div class="filters">
   <label class="sr" for="q">Buscar cliente</label>
@@ -9,7 +7,7 @@
   <label class="sr" for="est">Estado de gestión</label>
   <select id="est" class="sel" [ngModel]="estado()" (ngModelChange)="estado.set($event); limite.set(25)">
     <option value="todos">Todos los estados</option>
-    @for (e of catalogo()?.estadosGestion ?? []; track e) { <option [value]="e">{{ e }}</option> }
+    @for (e of estados(); track e) { <option [value]="e">{{ e }}</option> }
   </select>
   @if (gerente) {
     <label class="sr" for="as">Asesor</label>
@@ -39,10 +37,7 @@
               <span class="due" [class.late]="diasDesdeHoy(c.seguimiento) < 0">{{ fechaCorta(c.seguimiento) }} · {{ relativa(c.seguimiento) }}</span>
             } @else { - }
           </td>
-          <td class="r"><div class="acciones">
-            <button type="button" class="btn sm" (click)="fichaId.set(c.id)">Ver ficha</button>
-            <button type="button" class="btn sm pri" (click)="nuevaVenta(c)">Nueva venta</button></div>
-          </td>
+          <td class="r"><button type="button" class="btn sm" (click)="fichaId.set(c.id)">Ver ficha</button></td>
         </tr>
       } @empty {
         <tr><td colspan="9" class="empty">{{ error() || 'Ningún cliente coincide con la búsqueda.' }}</td></tr>
@@ -57,9 +52,5 @@
 </section>
 
 @if (fichaId(); as id) {
-  <app-client-drawer [clienteId]="id" [version]="versionFicha()" (cerrar)="fichaId.set(null)" (nuevaVenta)="nuevaVenta($event)" />
-}
-
-@if (formulario() !== undefined) {
-  <app-gestion-form [cliente]="formulario() ?? null" (guardado)="registrada($event)" (cancelar)="formulario.set(undefined)" />
+  <app-client-drawer [clienteId]="id" [conVenta]="false" (cerrar)="fichaId.set(null)" />
 }

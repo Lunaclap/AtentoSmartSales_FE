@@ -40,7 +40,7 @@ import { fechaCorta, fechaHora, gestionPill, guion, money, num, relativa, tipifi
 
           <dl class="dl">
             <dt>Documento</dt><dd>{{ f.cliente.tipoDocumento }} {{ f.cliente.numeroDocumento }}</dd>
-            <dt>Teléfono</dt><dd>{{ guion(f.cliente.telefono) }}</dd>
+            <dt>{{ f.cliente.telefonos.length > 1 ? 'Teléfonos' : 'Teléfono' }}</dt><dd>{{ guion(f.cliente.telefonos.join(' · ')) }}</dd>
             <dt>Correo</dt><dd>{{ guion(f.cliente.correo) }}</dd>
             <dt>Asesor</dt><dd>{{ guion(f.cliente.asesor) }}</dd>
             <dt>Último contacto</dt><dd>{{ f.cliente.ultimoContacto ? fechaHora(f.cliente.ultimoContacto) + ' · ' + relativa(f.cliente.ultimoContacto) : '-' }}</dd>
@@ -48,9 +48,11 @@ import { fechaCorta, fechaHora, gestionPill, guion, money, num, relativa, tipifi
             <dt>Venc. de campaña</dt><dd>{{ guion(f.cliente.vencimientoCampana) }}</dd>
           </dl>
 
-          <button type="button" class="btn pri" style="justify-self:start" (click)="nuevaVenta.emit(f.cliente)">
-            <app-icon name="plus" />Nueva venta
-          </button>
+          @if (conVenta()) {
+            <button type="button" class="btn pri" style="justify-self:start" (click)="nuevaVenta.emit(f.cliente)">
+              <app-icon name="plus" />Nueva venta
+            </button>
+          }
 
           @if (f.ventas.length) {
             <div>
@@ -60,7 +62,7 @@ import { fechaCorta, fechaHora, gestionPill, guion, money, num, relativa, tipifi
                   <div class="li">
                     <div>
                       <b>#{{ v.id }}</b> · {{ v.campana }} · {{ v.modalidad }}
-                      <div class="hint">{{ fechaHora(v.fecha) }} · {{ money(v.monto) }}</div>
+                      <div class="hint">{{ fechaHora(v.fecha) }} · {{ money(v.monto) }}@if (v.telefono) { · Línea {{ v.telefono }} }</div>
                     </div>
                     @if (v.devuelta) { <span class="pill warn">Devuelta</span> } @else { <app-pill [p]="ventaPill(v.estado)" /> }
                   </div>
@@ -77,7 +79,7 @@ import { fechaCorta, fechaHora, gestionPill, guion, money, num, relativa, tipifi
                   <div>
                     <b>{{ fechaHora(h.fecha) }}</b> <app-pill [p]="tipificacionPill(h.tipificacion)" />
                     <div class="hint" style="margin-top:4px">
-                      {{ h.estadoGestion }} · {{ h.asesor }}@if (h.campana) { · {{ h.campana }} }@if (h.modalidad) { · {{ h.modalidad }} }@if (h.monto) { · {{ money(h.monto) }} }
+                      {{ h.estadoGestion }} · {{ h.asesor }}@if (h.telefono) { · {{ h.telefono }} }@if (h.campana) { · {{ h.campana }} }@if (h.modalidad) { · {{ h.modalidad }} }@if (h.monto) { · {{ money(h.monto) }} }
                     </div>
                     @if (h.comentario) { <div style="margin-top:4px">{{ h.comentario }}</div> }
                   </div>
@@ -94,8 +96,8 @@ import { fechaCorta, fechaHora, gestionPill, guion, money, num, relativa, tipifi
 })
 export class ClientDrawerComponent {
   clienteId = input.required<number>();
-  /** Cambia para volver a cargar la ficha (p. ej. después de registrar una gestión). */
-  version = input(0);
+  /** Muestra el botón "Nueva venta"; no aparece cuando la ficha se abre desde Clientes. */
+  conVenta = input(true);
   cerrar = output<void>();
   nuevaVenta = output<Cliente>();
 
@@ -109,7 +111,6 @@ export class ClientDrawerComponent {
   constructor() {
     effect(() => {
       const id = this.clienteId();
-      this.version();
       this.error.set('');
       this.api.ficha(id).subscribe({
         next: f => this.f.set(f),

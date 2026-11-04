@@ -5,8 +5,9 @@ import {
   Catalogos, Cliente, DetalleAsesor, FichaCliente, GestionRegistrada, KpiCampana, MetaAsesor,
   NuevaGestion, ReporteAsesores, ResumenGerente, Venta, VentasRespuesta
 } from '../models/comercial.model';
+import { API_BASE_URL } from '../api.config';
 
-const API = 'http://localhost:8080/api';
+const API = `${API_BASE_URL}/api`;
 
 /** Rol guardado al iniciar sesión. El backend vuelve a validar los permisos en cada llamada. */
 export const rolActual = () => localStorage.getItem('userRole') || '';

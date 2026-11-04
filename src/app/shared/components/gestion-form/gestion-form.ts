@@ -1,4 +1,4 @@
-import { Component, HostListener, OnInit, inject, input, output, signal } from '@angular/core';
+import { Component, HostListener, Injector, OnInit, afterNextRender, inject, input, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ComercialService, esGerente, mensajeError } from '../../../core/services/comercial.service';
 import { Cliente, GestionRegistrada, NuevaGestion } from '../../../core/models/comercial.model';
@@ -7,6 +7,11 @@ import { money } from '../../utils/formato';
 
 type Campo = 'numeroDocumento' | 'nombres' | 'apellidos' | 'correo' | 'telefono' | 'campanaId' | 'modalidadId'
   | 'resultado' | 'monto' | 'asesorId' | 'fechaSeguimiento';
+
+/** Mismo límite que Cliente.MAX_TELEFONOS en el backend. */
+const MAX_TELEFONOS = 5;
+/** Valor de la opción del combo para escribir un número que aún no está registrado. */
+const OTRO_NUMERO = 'otro';
 
 const DESCRIPCION: Record<string, string> = {
   'Exitosa': 'Genera la venta en estado Pendiente',
@@ -57,20 +62,31 @@ const DESCRIPCION: Record<string, string> = {
             </div>
             <div class="field">
               <label for="g-tel">Teléfono *</label>
-              <input id="g-tel" class="inp" inputmode="numeric" maxlength="9" name="tel" [(ngModel)]="g.telefono" placeholder="9 dígitos"
-                     [attr.aria-invalid]="err().telefono ? true : null" />
+              @if (telefonos().length > 1 && !otroNumero()) {
+                <select id="g-tel" class="sel" name="tel" [ngModel]="g.telefono" (ngModelChange)="elegirTelefono($event)"
+                        [attr.aria-invalid]="err().telefono ? true : null">
+                  @for (t of telefonos(); track t) { <option [value]="t">{{ t }}</option> }
+                  @if (telefonos().length < maxTelefonos) { <option [value]="otro">Otro número…</option> }
+                </select>
+              } @else {
+                <input id="g-tel" class="inp" inputmode="numeric" maxlength="9" name="tel" [(ngModel)]="g.telefono" placeholder="9 dígitos"
+                       [attr.aria-invalid]="err().telefono ? true : null" />
+                @if (otroNumero()) {
+                  <button type="button" class="btn sm" style="justify-self:start" (click)="usarRegistrado()">Usar un número registrado</button>
+                }
+              }
               <span class="err">{{ err().telefono }}</span>
             </div>
           </div>
           <div class="three">
             <div class="field">
               <label for="g-nom">Nombres *</label>
-              <input id="g-nom" class="inp" name="nom" autocomplete="off" [(ngModel)]="g.nombres" [attr.aria-invalid]="err().nombres ? true : null" />
+              <input id="g-nom" class="inp" name="nom" autocomplete="off" [(ngModel)]="g.nombres" [disabled]="registrado()" [attr.aria-invalid]="err().nombres ? true : null" />
               <span class="err">{{ err().nombres }}</span>
             </div>
             <div class="field">
               <label for="g-ape">Apellidos *</label>
-              <input id="g-ape" class="inp" name="ape" autocomplete="off" [(ngModel)]="g.apellidos" [attr.aria-invalid]="err().apellidos ? true : null" />
+              <input id="g-ape" class="inp" name="ape" autocomplete="off" [(ngModel)]="g.apellidos" [disabled]="registrado()" [attr.aria-invalid]="err().apellidos ? true : null" />
               <span class="err">{{ err().apellidos }}</span>
             </div>
             <div class="field">
@@ -159,16 +175,19 @@ const DESCRIPCION: Record<string, string> = {
   `
 })
 export class GestionFormComponent implements OnInit {
-  /** Cliente existente (desde la tabla o la ficha); si es nulo, se registra un cliente nuevo. */
+  /** Cliente existente (desde la ficha); si es nulo, se busca por documento o se registra uno nuevo. */
   cliente = input<Cliente | null>(null);
   guardado = output<GestionRegistrada>();
   cancelar = output<void>();
 
   private api = inject(ComercialService);
+  private injector = inject(Injector);
   cat = this.api.catalogo;
   gerente = esGerente();
   desc = DESCRIPCION;
   money = money;
+  maxTelefonos = MAX_TELEFONOS;
+  otro = OTRO_NUMERO;
 
   g: NuevaGestion = {
     tipoDocumento: 'DNI', numeroDocumento: '', nombres: '', apellidos: '', correo: '', telefono: '',
@@ -179,6 +198,14 @@ export class GestionFormComponent implements OnInit {
   errorApi = signal('');
   avisoDoc = signal('');
   guardando = signal(false);
+  /** El cliente ya existe: sus nombres y apellidos no se editan. */
+  registrado = signal(false);
+  /** Números registrados del cliente; con más de uno, el teléfono es un combo. */
+  telefonos = signal<string[]>([]);
+  /** El asesor eligió "Otro número…": se muestra el campo de texto en lugar del combo. */
+  otroNumero = signal(false);
+  private telefonoPrevio = '';
+  private docBuscado = '';
 
   ngOnInit() {
     const c = this.cliente();
@@ -198,13 +225,42 @@ export class GestionFormComponent implements OnInit {
       tipoDocumento: c.tipoDocumento, numeroDocumento: c.numeroDocumento, nombres: c.nombres, apellidos: c.apellidos,
       correo: c.correo ?? '', telefono: c.telefono ?? ''
     });
+    this.registrado.set(true);
+    this.telefonos.set(c.telefonos);
+    this.otroNumero.set(false);
+  }
+
+  elegirTelefono(valor: string) {
+    if (valor !== OTRO_NUMERO) { this.g.telefono = valor; return; }
+    this.telefonoPrevio = this.g.telefono;
+    this.g.telefono = '';
+    this.otroNumero.set(true);
+    afterNextRender(() => document.getElementById('g-tel')?.focus(), { injector: this.injector });
+  }
+
+  usarRegistrado() {
+    this.g.telefono = this.telefonoPrevio;
+    this.otroNumero.set(false);
+    afterNextRender(() => document.getElementById('g-tel')?.focus(), { injector: this.injector });
+  }
+
+  /** Quita lo autocompletado cuando el documento cambia a otro cliente. */
+  private vaciarCliente() {
+    if (!this.registrado()) return;
+    Object.assign(this.g, { nombres: '', apellidos: '', correo: '', telefono: '' });
+    this.registrado.set(false);
+    this.telefonos.set([]);
+    this.otroNumero.set(false);
   }
 
   /** Si el documento ya existe, completa los datos del cliente. */
   buscarCliente() {
     if (this.cliente()) return;
     const doc = this.g.numeroDocumento.trim();
+    if (doc === this.docBuscado) return;
+    this.docBuscado = doc;
     this.avisoDoc.set('');
+    this.vaciarCliente();
     if (!/^\d{8,12}$/.test(doc)) return;
     this.api.clientePorDocumento(doc).subscribe({
       next: c => {

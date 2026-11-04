@@ -23,6 +23,8 @@ export interface Cliente {
   nombreCompleto: string;
   correo: string | null;
   telefono: string | null;
+  /** Todos los números del cliente; con más de uno, el formulario muestra un combo. */
+  telefonos: string[];
   campana: string | null;
   vencimientoCampana: string | null;
   estadoGestion: string;
@@ -37,6 +39,8 @@ export interface Gestion {
   id: number;
   fecha: string;
   asesor: string;
+  /** Número al que se llamó en esta gestión. */
+  telefono: string | null;
   campana: string | null;
   modalidad: string | null;
   estadoGestion: string;
@@ -51,6 +55,8 @@ export interface Venta {
   clienteId: number;
   cliente: string;
   documento: string;
+  /** Línea del cliente a la que corresponde la venta. */
+  telefono?: string;
   campana: string;
   modalidad: string;
   monto: number;
