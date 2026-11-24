@@ -8,7 +8,7 @@ import { GestionFormComponent } from '../../../shared/components/gestion-form/ge
 import { ClientDrawerComponent } from '../../../shared/components/client-drawer/client-drawer';
 import { ToastService } from '../../../shared/components/toast/toast';
 import { ComercialService, esGerente, mensajeError } from '../../../core/services/comercial.service';
-import { AvanceMeta, Cliente, GestionRegistrada, Venta } from '../../../core/models/comercial.model';
+import { AvanceMeta, GestionRegistrada, Venta } from '../../../core/models/comercial.model';
 import { fechaHora, guion, metaPill, money, num, pc, relativa, sinTildes, ventaPill } from '../../../shared/utils/formato';
 
 /**
@@ -42,14 +42,13 @@ export class VentasComponent implements OnInit {
 
   formulario = signal(false);
   fichaId = signal<number | null>(null);
-  nuevaDesdeFicha = signal<Cliente | null>(null);
   cerrando = signal<number | null>(null);
 
   /** La columna Asesor se muestra solo si las ventas la traen. */
   conAsesor = computed(() => this.ventas().some(v => v.asesor));
   columnas = computed(() => [
     'ID venta', 'Cliente', 'Teléfono', 'Campaña', 'Modalidad', 'Monto', 'Fecha', 'Estado de venta',
-    ...(this.conAsesor() ? ['Asesor'] : []), ...(this.gerente ? [''] : [])
+    ...(this.conAsesor() ? ['Asesor'] : []), 'Acción'
   ]);
 
   lista = computed(() => {
@@ -91,7 +90,6 @@ export class VentasComponent implements OnInit {
 
   registrada(r: GestionRegistrada) {
     this.formulario.set(false);
-    this.nuevaDesdeFicha.set(null);
     this.toast.show(r.venta ? `Venta #${r.venta.id} registrada como Pendiente.` : 'Gestión registrada; no generó venta.');
     this.cargar();
   }

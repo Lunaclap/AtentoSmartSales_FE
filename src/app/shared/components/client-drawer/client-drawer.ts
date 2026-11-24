@@ -1,11 +1,11 @@
 import { Component, HostListener, effect, inject, input, output, signal } from '@angular/core';
 import { ComercialService, mensajeError } from '../../../core/services/comercial.service';
-import { Cliente, FichaCliente } from '../../../core/models/comercial.model';
+import { FichaCliente } from '../../../core/models/comercial.model';
 import { IconComponent } from '../icon/icon';
 import { CampChipComponent, PillComponent } from '../pill/pill';
 import { fechaCorta, fechaHora, gestionPill, guion, money, num, relativa, tipificacionPill, ventaPill } from '../../utils/formato';
 
-/** Ficha del cliente: datos, resumen, historial de gestiones y ventas (REQ-21). */
+/** Ficha del cliente, solo de consulta: datos, resumen, historial de gestiones y ventas (REQ-21). */
 @Component({
   selector: 'app-client-drawer',
   standalone: true,
@@ -47,12 +47,6 @@ import { fechaCorta, fechaHora, gestionPill, guion, money, num, relativa, tipifi
             <dt>Seguimiento</dt><dd>{{ f.cliente.seguimiento ? fechaCorta(f.cliente.seguimiento) + ' · ' + relativa(f.cliente.seguimiento) : '-' }}</dd>
             <dt>Venc. de campaña</dt><dd>{{ guion(f.cliente.vencimientoCampana) }}</dd>
           </dl>
-
-          @if (conVenta()) {
-            <button type="button" class="btn pri" style="justify-self:start" (click)="nuevaVenta.emit(f.cliente)">
-              <app-icon name="plus" />Nueva venta
-            </button>
-          }
 
           @if (f.ventas.length) {
             <div>
@@ -96,10 +90,7 @@ import { fechaCorta, fechaHora, gestionPill, guion, money, num, relativa, tipifi
 })
 export class ClientDrawerComponent {
   clienteId = input.required<number>();
-  /** Muestra el botón "Nueva venta"; no aparece cuando la ficha se abre desde Clientes. */
-  conVenta = input(true);
   cerrar = output<void>();
-  nuevaVenta = output<Cliente>();
 
   private api = inject(ComercialService);
   f = signal<FichaCliente | null>(null);
