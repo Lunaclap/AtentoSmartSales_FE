@@ -175,7 +175,7 @@ const DESCRIPCION: Record<string, string> = {
   `
 })
 export class GestionFormComponent implements OnInit {
-  /** Cliente existente (desde la ficha); si es nulo, se busca por documento o se registra uno nuevo. */
+  /** Cliente existente (desde Clientes); si es nulo, se busca por documento o se registra uno nuevo. */
   cliente = input<Cliente | null>(null);
   guardado = output<GestionRegistrada>();
   cancelar = output<void>();
@@ -267,7 +267,9 @@ export class GestionFormComponent implements OnInit {
         this.llenar(c);
         const cat = this.cat();
         if (cat && c.campana && !this.g.campanaId) this.g.campanaId = cat.campanas.find(x => x.nombre === c.campana)?.id ?? null;
-        this.avisoDoc.set('Cliente registrado: se completaron sus datos.');
+        this.avisoDoc.set(c.estadoGestion === 'Black List'
+          ? 'Cliente en Black List: no se le pueden registrar ventas ni gestiones.'
+          : 'Cliente registrado: se completaron sus datos.');
       },
       error: e => this.avisoDoc.set(e?.status === 404 ? 'Cliente nuevo.' : mensajeError(e))
     });

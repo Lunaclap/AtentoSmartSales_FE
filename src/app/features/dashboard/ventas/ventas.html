@@ -39,11 +39,11 @@
   </select>
 </div>
 
-<section class="card">
+<section class="card t-compacta">
   @if (cargando()) {
     <div class="empty"><div class="spin" role="status"></div>Cargando ventas…</div>
   } @else {
-    <app-data-table [columnas]="columnas()" [derecha]="['Monto', '']">
+    <app-data-table [columnas]="columnas()" [derecha]="['Monto', 'Acción']">
       @for (v of visibles(); track v.id) {
         <tr>
           <td class="mono">#{{ v.id }}</td>
@@ -58,13 +58,12 @@
             @if (v.estado === 'Pendiente') { <span class="hint"> · {{ relativa(v.fecha) }}</span> }
           </td>
           @if (conAsesor()) { <td>{{ v.asesor }}</td> }
-          @if (gerente) {
-            <td class="r">
-              @if (v.estado === 'Pendiente') {
-                <button type="button" class="btn sm" [disabled]="cerrando() === v.id" (click)="cerrar(v)">Marcar cerrada</button>
-              }
-            </td>
-          }
+          <td class="r"><div class="acciones">
+            <button type="button" class="btn sm" (click)="fichaId.set(v.clienteId)">Ver ficha</button>
+            @if (gerente && v.estado === 'Pendiente') {
+              <button type="button" class="btn sm" [disabled]="cerrando() === v.id" (click)="cerrar(v)">Marcar cerrada</button>
+            }
+          </div></td>
         </tr>
       } @empty {
         <tr><td [attr.colspan]="columnas().length" class="empty">{{ error() || 'No hay ventas que coincidan con los filtros.' }}</td></tr>
@@ -79,9 +78,9 @@
 </section>
 
 @if (fichaId(); as id) {
-  <app-client-drawer [clienteId]="id" (cerrar)="fichaId.set(null)" (nuevaVenta)="fichaId.set(null); nuevaDesdeFicha.set($event); formulario.set(true)" />
+  <app-client-drawer [clienteId]="id" (cerrar)="fichaId.set(null)" />
 }
 
 @if (formulario()) {
-  <app-gestion-form [cliente]="nuevaDesdeFicha()" (guardado)="registrada($event)" (cancelar)="formulario.set(false); nuevaDesdeFicha.set(null)" />
+  <app-gestion-form (guardado)="registrada($event)" (cancelar)="formulario.set(false)" />
 }

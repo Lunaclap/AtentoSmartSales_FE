@@ -37,7 +37,12 @@
               <span class="due" [class.late]="diasDesdeHoy(c.seguimiento) < 0">{{ fechaCorta(c.seguimiento) }} · {{ relativa(c.seguimiento) }}</span>
             } @else { - }
           </td>
-          <td class="r"><button type="button" class="btn sm" (click)="fichaId.set(c.id)">Ver ficha</button></td>
+          <td class="r"><div class="acciones fila">
+            <button type="button" class="btn sm" (click)="fichaId.set(c.id)">Ver ficha</button>
+            @if (c.estadoGestion !== 'Black List') {
+              <button type="button" class="btn sm pri" (click)="ventaPara.set(c)">Nueva venta</button>
+            }
+          </div></td>
         </tr>
       } @empty {
         <tr><td colspan="9" class="empty">{{ error() || 'Ningún cliente coincide con la búsqueda.' }}</td></tr>
@@ -52,5 +57,9 @@
 </section>
 
 @if (fichaId(); as id) {
-  <app-client-drawer [clienteId]="id" [conVenta]="false" (cerrar)="fichaId.set(null)" />
+  <app-client-drawer [clienteId]="id" (cerrar)="fichaId.set(null)" />
+}
+
+@if (ventaPara(); as c) {
+  <app-gestion-form [cliente]="c" (guardado)="registrada($event)" (cancelar)="ventaPara.set(null)" />
 }
